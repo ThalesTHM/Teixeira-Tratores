@@ -15,3 +15,5 @@ if (!admin.apps.length) {
 
 export const adminAuth = admin.auth();
 export const adminDB = admin.database();
+export const adminFirestore = admin.firestore();
+export const adminSDK = admin;

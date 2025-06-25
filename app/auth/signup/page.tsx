@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth'
 import { auth } from '@/firebase/firebase';
 import { useRouter } from 'next/navigation';
-import { createSession } from '@/lib/auth';
+import { createSession, createUser } from '@/lib/auth';
+import { signInWithCustomToken } from 'firebase/auth';
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -31,12 +32,40 @@ const Signup = () => {
 
       await signupFormSchema.parseAsync(formValues);
 
-      const user = await createUserWithEmailAndPassword(
-        formData.get("email") as string,
-        formData.get("password") as string
+      const user = await createUser(
+        {
+          email: formData.get("email") as string,
+          password: formData.get("password") as string
+        }
       );
+      
+      if(!user.success){
+        switch(user.error) {
+          case "Email Invite Not Found":
+            toast.error("Convite de E-mail Não Encontrado.");
+            break;
+          case "Email Already Registered":
+            toast.error("E-mail Já Registrado.");
+            break;
+          case "Internal Server Error":
+            toast.error("Erro Interno do Servidor.");
+            break;
+          default:
+            toast.error("Erro ao Criar Sessão.");
+        }
+        
+        return {
+          ...prevState,
+          error: user.error,
+          status: "ERROR",
+        };
+      }
+      const userToken = user.userToken as string;
+      
+      const userCredentials = await signInWithCustomToken(auth, userToken);
 
-      const idToken = (await user?.user.getIdToken()) as string;
+      const idToken = await userCredentials.user.getIdToken();
+      const email = userCredentials.user.email as string;
 
       const resCreateSession = await createSession({ idToken });
 

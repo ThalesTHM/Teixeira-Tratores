@@ -262,7 +262,7 @@ const BillsToPayForm = () => {
             {errors.paymentStatus && (
               errors.paymentStatus.map((error: string, i: number) => (
                 <div key={i}>
-                  <p className="forms-error" key={i}>{error}</p> 
+                  <p className="forms-error" key={i}>{error}</p>
                 </div>
               ))
             )}

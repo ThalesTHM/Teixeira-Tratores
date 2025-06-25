@@ -1,11 +1,11 @@
 "use server";
 
 import { getUserFromSession } from "@/lib/auth";
-import { clientFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
+import { employeeFormSchema } from "./validation";
 
-export const createClient = async (formData: FormData) => {
+export const createEmployee = async (formData: FormData) => {
     const session = await getUserFromSession();
 
     if (!session) {
@@ -15,15 +15,18 @@ export const createClient = async (formData: FormData) => {
         }
     }
 
-    const clientData = {
+    const employeeData = {
         name: formData.get('name') as string,
+        email: formData.get('email') as string,
+        position: formData.get('position') as string,
+        pnumber: formData.get('pnumber') as string,
         cpf: formData.get('cpf') as string,
         address: formData.get('address') as string,
-        pnumber: formData.get('pnumber') as string
+        used: false
     }
 
-    try{
-        await clientFormSchema.parseAsync(clientData);
+    try {
+        await employeeFormSchema.parseAsync(employeeData);
     } catch (error) {
         if (error instanceof z.ZodError) {
             const fieldErrors = error.flatten().fieldErrors;
@@ -36,18 +39,15 @@ export const createClient = async (formData: FormData) => {
     }
 
     try {
-        const clientsCollection = adminFirestore.collection('clients');
-        await clientsCollection.add({
-            name: clientData.name,
-            cpf: clientData.cpf,
-            address: clientData.address,
-            pnumber: clientData.pnumber,
-            createdAt: Date.now(),
+        const employeesCollection = adminFirestore.collection('emailInvites');
+        await employeesCollection.add({
+            ...employeeData,
+            createdAt: Date.now()
         });
     } catch (error) {
         return {
             success: false,
-            error:  "Error Creating Client"
+            error: "Error Creating Employee",
         }
     }
 

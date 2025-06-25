@@ -40,6 +40,12 @@ const NavbarMenuBar = (props: { menuTitle: string }) => {
     
           <MenubarSeparator />
 
+          <Link href={`/${menuTitle}/funcionario`}>
+            <MenubarItem>{menuTitle == "visualizar" ? "Funcionários" : "Funcionário"}</MenubarItem>
+          </Link>
+    
+          <MenubarSeparator />
+
           <MenubarSub>
             <MenubarSubTrigger>{menuTitle == "visualizar" ? "Contas" : "Conta"}</MenubarSubTrigger>
             <MenubarSubContent>
