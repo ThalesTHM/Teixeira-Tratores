@@ -5,7 +5,7 @@ import { z } from "zod";
 export const employeeFormSchema = z.object({
   name: z.string().min(1, { message: "Nome Deve Ter No Mínimo 1 Caractere." }),
   email: z.string().min(6, { message: "Email Deve Ter No Mínimo 6 Caracteres." }).email("Endereço De E-mail Inválido."),
-  position: z.string().min(1, { message: "Cargo Deve Ter No Mínimo 1 Caractere." })
+  role: z.string().min(1, { message: "Cargo Deve Ter No Mínimo 1 Caractere." })
   .refine((val) => {
     const positions = ["manager", "admin", "employee"];
     return positions.includes(val);

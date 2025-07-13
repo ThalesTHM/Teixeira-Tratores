@@ -18,7 +18,7 @@ export const createEmployee = async (formData: FormData) => {
     const employeeData = {
         name: formData.get('name') as string,
         email: formData.get('email') as string,
-        position: formData.get('position') as string,
+        role: formData.get('role') as string,
         pnumber: formData.get('pnumber') as string,
         cpf: formData.get('cpf') as string,
         address: formData.get('address') as string,

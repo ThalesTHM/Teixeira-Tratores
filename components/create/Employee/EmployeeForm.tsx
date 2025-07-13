@@ -11,7 +11,7 @@ import React, { useActionState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const positions = [
+const roles = [
   { key: 'admin', value: 'Administrador' },
   { key: 'manager', value: 'Gerente' },
   { key: 'employee', value: 'Empregado' }
@@ -25,7 +25,7 @@ const EmployeeForm = () => {
     const formValues = {
       name: formData.get('name'),
       email: formData.get('email'),
-      position: formData.get('position'),
+      role: formData.get('role'),
       pnumber: formData.get('pnumber'),
       cpf: formData.get('cpf'),
       address: formData.get('address')
@@ -120,15 +120,15 @@ const EmployeeForm = () => {
           </div>
 
           <div>
-            <Label htmlFor="position" className='forms-label'>Cargo</Label>
+            <Label htmlFor="role" className='forms-label'>Cargo</Label>
             <SelectInput
               placeholder='Cargo do Funcionário'
-              name='position'
-              items={positions}
+              name='role'
+              items={roles}
               selectLabel='Cargos'
             />
-            {errors.position && (
-              errors.position.map((error: string, i: number) => (
+            {errors.role && (
+              errors.role.map((error: string, i: number) => (
                 <div key={i}>
                   <p className="forms-error" key={i}>{error}</p> 
                 </div>

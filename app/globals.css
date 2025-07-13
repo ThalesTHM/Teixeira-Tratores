@@ -125,7 +125,7 @@
 
 @layer utilities{
   .main-auth-form-container {
-    @apply min-w-screen min-h-screen flex items-center justify-center;
+    @apply min-w-full min-h-full flex items-center justify-center;
   }
 
   .auth-form-container {
