@@ -19,6 +19,42 @@ export const loginFormSchema = z.object({
   password: z.string().min(8, { message: "Senha Deve Ter No Mínimo 8 Caracteres." })
 });
 
+export const emailRecoverFormSchema = z.object({
+  email: z.string().min(6, { message: "Email Deve Ter No Mínimo 6 Caracteres." }).email("Endereço De E-mail Inválido."),
+});
+
+export const passwordRecoveryFormSchema = z.object({
+  email: z.string().min(6, { message: "Email Deve Ter No Mínimo 6 Caracteres." }).email("Endereço De E-mail Inválido."),
+  newPassword: z.string().min(6, { message: "Senha Deve Ter No Mínimo 6 Caracteres." })
+    .refine((val) => /[A-Z]/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Uma Letra Maiúscula.",
+    })
+    .refine((val) => /\d/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Um Número.",
+    })
+    .refine((val) => /[!@#$%^&*(),.?":{}|<>]/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Um Caractere Especial.",
+    }),
+  newPasswordConfirmation: z.string().min(6, { message: "Senha Deve Ter No Mínimo 6 Caracteres." })
+    .refine((val) => /[A-Z]/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Uma Letra Maiúscula.",
+    })
+    .refine((val) => /\d/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Um Número.",
+    })
+    .refine((val) => /[!@#$%^&*(),.?":{}|<>]/.test(val), {
+      message: "A Senha Deve Conter Pelo Menos Um Caractere Especial.",
+    }),
+  code: z.string().min(6, { message: "Código Deve Ter No Mínimo 6 Caracteres." })
+}).superRefine((data, ctx) => {
+  if (data.newPassword !== data.newPasswordConfirmation) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "As Senhas Não Conferem.",
+    });
+  }
+});
+
 export const clientFormSchema = z.object({
   name: z.string().min(1, { message: "Nome Deve Ter No Mínimo 1 Caractere." }),
   cpf: z.string().min(14, { message: "CPF Deve Ter No Mínimo 14 Caracteres." })
@@ -144,7 +180,7 @@ export const projectFormSchema = z.object({
 export const employeeFormSchema = z.object({
   name: z.string().min(1, { message: "Nome Deve Ter No Mínimo 1 Caractere." }),
   email: z.string().min(6, { message: "Email Deve Ter No Mínimo 6 Caracteres." }).email("Endereço De E-mail Inválido."),
-  position: z.string().min(1, { message: "Cargo Deve Ter No Mínimo 1 Caractere." })
+  role: z.string().min(1, { message: "Cargo Deve Ter No Mínimo 1 Caractere." })
   .refine((val) => {
     const positions = ["manager", "admin", "employee"];
     return positions.includes(val);

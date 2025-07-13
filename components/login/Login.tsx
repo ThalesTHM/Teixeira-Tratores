@@ -55,7 +55,7 @@ const Login = () => {
       const resCreateSession = await createSession({ idToken });
 
       if(!resCreateSession.success){
-        toast.error("Erro ao Criar a Sessão, Tente Novamente.");
+        toast.error("Senha ou Login Incorretos, Tente Novamente.");
         return {
           ...prevState,
           error: resCreateSession.error,
