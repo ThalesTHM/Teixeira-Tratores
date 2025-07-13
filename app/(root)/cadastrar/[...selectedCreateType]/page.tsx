@@ -27,6 +27,9 @@ const page = async ({ params }: { params: Promise<{ selectedCreateType: Array<st
     case 'fornecedor':
       formComponent = <SupplierForm />;
       break;
+    case 'funcionario':
+      formComponent = <EmployeeForm />;
+      break;
     case 'conta':
       switch (selectedCreateType[1]) {
         case 'conta-a-pagar':

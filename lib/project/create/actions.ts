@@ -2,8 +2,7 @@
 
 import { getUserFromSession } from "@/lib/auth";
 import { z } from "zod";
-import { adminAuth, adminDB } from "@/firebase/firebase-admin";
-import { push, ref, set } from "firebase/database";
+import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { projectFormSchema } from "./validation";
 
 export const createProject = async (formData: FormData) => {
@@ -40,10 +39,8 @@ export const createProject = async (formData: FormData) => {
     const uid = session.uid;
 
     try {
-        const projectsRef = adminDB.ref(`projects`);
-        const newProjectRef = projectsRef.push();
-
-        await newProjectRef.set({
+        const projectsCollection = adminFirestore.collection('projects');
+        await projectsCollection.add({
             name: projectData.name,
             value: projectData.expectedBudget,
             deadline: projectData.deadline,

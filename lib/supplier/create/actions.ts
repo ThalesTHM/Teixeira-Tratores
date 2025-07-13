@@ -3,8 +3,7 @@
 import { getUserFromSession } from "@/lib/auth";
 import { supplierFormSchema } from "./validation";
 import { z } from "zod";
-import { adminAuth, adminDB } from "@/firebase/firebase-admin";
-import { push, ref, set } from "firebase/database";
+import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 
 export const createSupplier = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -40,10 +39,8 @@ export const createSupplier = async (formData: FormData) => {
     const uid = session.uid;
 
     try {
-        const suppliersRef = adminDB.ref(`suppliers`);
-        const newSupplierRef = suppliersRef.push();
-
-        await newSupplierRef.set({
+        const suppliersCollection = adminFirestore.collection('suppliers');
+        await suppliersCollection.add({
             name: supplierData.name,
             cnpj: supplierData.cnpj,
             address: supplierData.address,
