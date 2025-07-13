@@ -42,7 +42,6 @@ export const getUserFromSession = async () => {
     const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
     
     const user = await getUserInfoByUID(decoded.uid);
-    console.log("userData: ", user);
     
     return { ...decoded, ...user };
   } catch (err) {
