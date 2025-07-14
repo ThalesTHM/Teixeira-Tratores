@@ -56,3 +56,35 @@ export const getClientBySlug = async (slug: string) => {
         };
     }
 };
+
+export const getClientById = async (id: string) => {
+    const session = await getUserFromSession();
+    if (!session) {
+        return {
+            success: false,
+            error: "User Not Authenticated",
+            client: null
+        };
+    }
+    try {
+        const clientDoc = await adminFirestore.collection('clients').doc(id).get();
+        if (!clientDoc.exists) {
+            return {
+                success: false,
+                error: "Client not found",
+                client: null
+            };
+        }
+        return {
+            success: true,
+            client: { id: clientDoc.id, ...clientDoc.data() },
+            error: ""
+        };
+    } catch (error) {
+        return {
+            success: false,
+            client: null,
+            error: "Error fetching client by id"
+        };
+    }
+};

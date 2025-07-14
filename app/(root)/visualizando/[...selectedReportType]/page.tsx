@@ -1,4 +1,6 @@
 import ClientForm from '@/components/view/Client/ClientForm';
+import ProjectForm from '@/components/view/Project/ProjectForm';
+import SupplierForm from '@/components/view/Supplier/SupplierForm';
 import React from 'react';
 
 const page = async ({ params }: { params: Promise<{ selectedReportType: Array<string> }>}) => {
@@ -12,6 +14,20 @@ const page = async ({ params }: { params: Promise<{ selectedReportType: Array<st
         content = <ClientForm slug={selectedReportType[1]} />;
       } else {
         content = <div>Slug do cliente não informado.</div>;
+      }
+      break;
+    case 'projeto':
+      if (selectedReportType[1]) {
+        content = <ProjectForm slug={selectedReportType[1]} />;
+      } else {
+        content = <div>Slug do projeto não informado.</div>;
+      }
+      break;
+    case 'fornecedor':
+      if (selectedReportType[1]) {
+        content = <SupplierForm slug={selectedReportType[1]} />;
+      } else {
+        content = <div>Slug do fornecedor não informado.</div>;
       }
       break;
     // Add more cases for other types as needed

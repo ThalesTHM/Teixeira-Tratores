@@ -11,6 +11,7 @@ import { db, firebase } from '@/firebase/firebase';
 import { createClient } from '@/lib/client/create/actions';
 import { createProject } from '@/lib/project/create/actions';
 import { clientFormSchema,  projectFormSchema } from '@/lib/validation';
+import { viewClients } from '@/lib/client/view/actions';
 import { Switch } from '@radix-ui/react-switch';
 import { onValue, ref } from 'firebase/database';
 import React, { useActionState, useEffect, useState } from 'react'
@@ -27,49 +28,24 @@ const ProjectForm = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [clients, setClients] = useState<Client[]>();
+  const [clients, setClients] = useState<Client[]>([]);
   const [loadingError, setLoadingError] = useState<boolean>();
 
   useEffect(() => {
     setIsLoaded(false);
-
-    const clientsRef = ref(db, 'clients');
-
-    const unsubscribe = onValue(clientsRef, (snapshot) => {
-      const data = snapshot.val() as
-      | Record<string, { name: string; createdAt: number }>
-      | null;
-
-      console.log("In real time data: ", data);
-      
-      if(data){
-        const clientsArray: Client[] = Object.entries(data).map(
-        ([id, raw]) => ({
-          id,
-          name: raw.name,
-          createdAt: raw.createdAt
-        }))
-
-        setClients(clientsArray);
+    const fetchClients = async () => {
+      const res = await viewClients();
+      if (res.success) {
+        const validClients = (res.clients as any[]).filter(c => c.id && c.name && c.createdAt);
+        setClients(validClients);
+        setLoadingError(false);
       } else {
-        console.log("No clients found.");
         setClients([]);
+        setLoadingError(true);
       }
-      
-      setLoadingError(false);
       setIsLoaded(true);
-    }, (databaseError) => {
-      console.error("Error fetching clients:", databaseError);
-      toast.error("Erro no Banco de Dados.");
-      setLoadingError(true);
-      setClients([]);
-      setIsLoaded(false);
-    })
-
-    return () => {
-      console.log("Detaching Realtime Database listener for /clients");
-      unsubscribe();
-    }
+    };
+    fetchClients();
   }, [])
 
   const handleSubmit = async (prevState: any, formData: FormData) => {
