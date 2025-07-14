@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/select"
 
 export const SelectInput = (
-  { name, items, selectLabel, placeholder }:
-  { name: string, items: Array<Record<string, string>>, selectLabel: string, placeholder: string }
+  { name, items, selectLabel, placeholder, defaultValue }:
+  { name: string, items: Array<Record<string, string>>, selectLabel: string, placeholder: string, defaultValue?: string }
 ) => {
-  const [value, setValue] = React.useState("")
+  const [value, setValue] = React.useState(defaultValue || "")
 
   return (
     <>

@@ -4,6 +4,19 @@ import { getUserFromSession } from "@/lib/auth";
 import { z } from "zod";
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { projectFormSchema } from "./validation";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
+
+function generateSlug(name: string) {
+    return [
+        name?.toString().toLowerCase().replace(/\s+/g, "-") || "project",
+        nanoid(),
+        nanoid(),
+        nanoid(),
+        nanoid()
+    ].join('-');
+}
 
 export const createProject = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -37,6 +50,7 @@ export const createProject = async (formData: FormData) => {
     }
 
     const uid = session.uid;
+    const slug = generateSlug((projectData.name ?? "") as string);
 
     try {
         const projectsCollection = adminFirestore.collection('projects');
@@ -46,7 +60,8 @@ export const createProject = async (formData: FormData) => {
             deadline: projectData.deadline,
             description: projectData.description,
             client: projectData.client,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            slug
         });
     } catch (error) {
         return {

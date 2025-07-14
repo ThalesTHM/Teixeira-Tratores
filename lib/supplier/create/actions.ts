@@ -4,6 +4,19 @@ import { getUserFromSession } from "@/lib/auth";
 import { supplierFormSchema } from "./validation";
 import { z } from "zod";
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
+
+function generateSlug(name: string) {
+    return [
+        name?.toString().toLowerCase().replace(/\s+/g, "-") || "supplier",
+        nanoid(),
+        nanoid(),
+        nanoid(),
+        nanoid()
+    ].join('-');
+}
 
 export const createSupplier = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -37,16 +50,17 @@ export const createSupplier = async (formData: FormData) => {
     }
 
     const uid = session.uid;
+    const slug = generateSlug(supplierData.name);
 
     try {
-        const suppliersCollection = adminFirestore.collection('suppliers');
-        await suppliersCollection.add({
+        await adminFirestore.collection('suppliers').add({
             name: supplierData.name,
             cnpj: supplierData.cnpj,
             address: supplierData.address,
             pnumber: supplierData.pnumber,
             description: supplierData.description,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            slug
         });
     } catch (error) {
         return {
