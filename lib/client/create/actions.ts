@@ -4,6 +4,14 @@ import { getUserFromSession } from "@/lib/auth";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
+
+function generateSlug() {
+    // Example: abcd12-efg34-hijk56-lmnop7
+    return [nanoid(), nanoid(), nanoid(), nanoid()].join('-');
+}
 
 export const createClient = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -42,6 +50,7 @@ export const createClient = async (formData: FormData) => {
             cpf: clientData.cpf,
             address: clientData.address,
             pnumber: clientData.pnumber,
+            slug: generateSlug(),
             createdAt: Date.now(),
         });
     } catch (error) {
