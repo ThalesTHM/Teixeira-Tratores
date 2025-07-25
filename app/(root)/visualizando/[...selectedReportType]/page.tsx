@@ -30,7 +30,14 @@ const page = async ({ params }: { params: Promise<{ selectedReportType: Array<st
         content = <div>Slug do fornecedor não informado.</div>;
       }
       break;
-    // Add more cases for other types as needed
+    case 'funcionario':
+      if (selectedReportType[1]) {
+        const EmployeeForm = (await import('@/components/view/Employee/EmployeeForm')).default;
+        content = <EmployeeForm slug={selectedReportType[1]} />;
+      } else {
+        content = <div>Slug do funcionário não informado.</div>;
+      }
+      break;
     default:
       content = <div>Tipo de visualização desconhecido.</div>;
   }
