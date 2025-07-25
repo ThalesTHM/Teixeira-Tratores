@@ -6,6 +6,15 @@ import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
 import { getEmployeeBySlug } from "../view/actions";
 
+const checkIfEmployeeIsEqual = (originalEmployee: any, data: any) => {
+  return originalEmployee.name === data.name &&
+         originalEmployee.email === data.email &&
+         originalEmployee.role === data.role &&
+         originalEmployee.pnumber === data.pnumber &&
+         originalEmployee.cpf === data.cpf &&
+         originalEmployee.address === data.address;
+}
+
 const checkEmailIsInUse = async (email: string) => {
   try {
     return await adminAuth.getUserByEmail(email);
@@ -21,6 +30,7 @@ export const editEmployee = async (slug: string, data: any) => {
     return { success: false, error: "User Not Authenticated" };
   }
 
+  
   try {
     await employeeFormSchema.parseAsync(data);
   } catch (error) {
@@ -33,8 +43,20 @@ export const editEmployee = async (slug: string, data: any) => {
     }
   }
 
+  const originalEmployeeRes = await getEmployeeBySlug(slug);
+  
+  if (!originalEmployeeRes.success) {
+    return { success: false, error: originalEmployeeRes.error };
+  }
+
+  const originalEmployee = originalEmployeeRes.employee;
+
+  if (checkIfEmployeeIsEqual(originalEmployee, data)) {
+    return { success: false, error: "An employee with the same data already exists." };
+  }
+
   try {
-    if(session.email !== data.email){
+    if(originalEmployee.email !== data.email){
       const emailInUse = await checkEmailIsInUse(data.email);
       if (emailInUse) {
         return { success: false, error: "Email already in use" };

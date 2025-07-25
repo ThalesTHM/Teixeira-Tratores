@@ -2,6 +2,7 @@ import React from 'react'
 import ClientList from '@/components/list/client/clientList'
 import SupplierList from '@/components/list/supplier/supplierList'
 import ProjectList from '@/components/list/project/projectList'
+import EmployeeList from '@/components/list/employee/employeeList'
 
 const SelectReportItem = async ({ params }: { params: Promise<{ selectedReportType: Array<string> }> }) => {
   const { selectedReportType } = await params
@@ -18,8 +19,9 @@ const SelectReportItem = async ({ params }: { params: Promise<{ selectedReportTy
     case 'projeto':
       listComponent = <ProjectList />
       break
-    // Add other cases for different list components as you create them
-    default:
+    case 'funcionario':
+      listComponent = <EmployeeList />
+      break
       listComponent = <div>Tipo de relatório desconhecido.</div>
   }
 
