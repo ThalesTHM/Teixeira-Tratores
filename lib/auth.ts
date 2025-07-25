@@ -1,6 +1,6 @@
 "use server";
 
-import { adminAuth, adminFirestore, adminDB } from '@/firebase/firebase-admin';
+import { adminAuth, adminFirestore } from '@/firebase/firebase-admin';
 import { create } from 'domain';
 import { cookies } from 'next/headers';
 import { passwordRecoverySchema, signupFormSchema } from './auth-validation';
@@ -288,37 +288,37 @@ const createUserDocument = async (email: string, uid: string) => {
     updatedAt: Date.now(),
   }
 
-  await adminDB.ref(`users/${uid}`).set(userData);
+  await adminFirestore.collection('users').doc(uid).set(userData);
 }
 
 const setEmailInviteUsed = async (email: string) => {
-  const emailKey = email.replace(/\./g, ',');
-  const ref = adminDB.ref(`emailInvites/${emailKey}`);
-  const snapshot = await ref.once('value');
-
-  if (!snapshot.exists()) {
+  const emailInviteCollection = adminFirestore.collection('emailInvites');
+  const querySnapshot = await emailInviteCollection.where('email', '==', email).get()
+  if (querySnapshot.empty) {
     return false;
   }
- 
-  await ref.update({ used: true });
- 
+  const emailInviteDoc = querySnapshot.docs[0];
+  await emailInviteDoc.ref.update({ used: true });
   return true;
 }
 
 const getEmailInvite = async (email: string) => {
-  const emailKey = email.replace(/\./g, ',');
-  const snapshot = await adminDB.ref(`emailInvites/${emailKey}`).once('value');
-
-  if (!snapshot.exists()) {
+  const emailInviteCollection = adminFirestore.collection('emailInvites');
+  const querySnapshot = await emailInviteCollection.where('email', '==', email).get();
+ 
+  if (querySnapshot.empty) {
     return null;
   }
 
-  return snapshot.val();
+  const emailInviteData = querySnapshot.docs[0].data();
+  
+  return emailInviteData
 }
 
 export const createUser = async ({ email, password }: { email: string, password: string }) => {
   try {
     const emailInvite = await getEmailInvite(email);
+    console.log("Email Invite:", emailInvite);
 
     if (!emailInvite) {
       return { success: false, userToken: null, error: "Email Invite Not Found" };
