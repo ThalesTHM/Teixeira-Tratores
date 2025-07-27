@@ -1,7 +1,10 @@
 import ClientForm from '@/components/view/Client/ClientForm';
 import ProjectForm from '@/components/view/Project/ProjectForm';
 import SupplierForm from '@/components/view/Supplier/SupplierForm';
+import BillsToPayForm from '@/components/view/Bill/Pay/BillsToPayForm';
+import BillsToRecieveForm from '@/components/view/Bill/Recieve/BillsToRecieveForm';
 import React from 'react';
+import EmployeeForm from '@/components/view/Employee/EmployeeForm';
 
 const page = async ({ params }: { params: Promise<{ selectedReportType: Array<string> }>}) => {
   const { selectedReportType } = await params;
@@ -32,12 +35,22 @@ const page = async ({ params }: { params: Promise<{ selectedReportType: Array<st
       break;
     case 'funcionario':
       if (selectedReportType[1]) {
-        const EmployeeForm = (await import('@/components/view/Employee/EmployeeForm')).default;
         content = <EmployeeForm slug={selectedReportType[1]} />;
       } else {
         content = <div>Slug do funcionário não informado.</div>;
       }
       break;
+    case 'conta':
+      if (selectedReportType[1] === 'conta-a-pagar') {
+        content = <BillsToPayForm slug={selectedReportType[2]} />;
+        break;
+      } else if (selectedReportType[1] === 'conta-a-receber') {
+        content = <BillsToRecieveForm slug={selectedReportType[2]} />;
+        break;
+      } else {
+        content = <div>Slug da conta não informado.</div>;
+        break;
+      }
     default:
       content = <div>Tipo de visualização desconhecido.</div>;
   }

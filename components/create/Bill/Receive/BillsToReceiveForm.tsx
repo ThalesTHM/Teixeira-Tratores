@@ -10,92 +10,59 @@ import { billsToRecieveFormSchema, projectFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { auth, db } from '@/firebase/firebase';
-import { ref, onValue, off } from 'firebase/database';
+import { viewProjects } from '@/lib/project/view/actions';
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
-import { createBillToRecieve } from '@/lib/bill/recieve/actions';
+import { createBillToRecieve } from '@/lib/bill/recieve/create/actions';
 
-type Supplier = {
-  id: string;
-  createdAt: number;
+type Project = {
+  slug: string;
   name: string;
+  createdAt?: number;
 }
+
+const paymentMethods = [
+  { key: 'PIX', value: 'PIX' },
+  { key: 'CC', value: 'Cartão de Crédito' },
+  { key: 'CB', value: 'Cartão de Débito' },
+  { key: 'DIN', value: 'Dinheiro' },
+  { key: 'BOL', value: 'Boleto' },
+  { key: 'TRF', value: 'Transferência' },
+];
+
+const paymentStatus = [
+  { key: 'P', value: 'Pago' },
+  { key: 'PEN', value: 'Pendente' },
+  { key: 'ATR', value: 'Atrasado' },
+];
 
 const BillsToRecieveForm = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [projects, setProjects] = useState<Supplier[]>();
+  const [projects, setProjects] = useState<Project[]>();
   const [loadingError, setLoadingError] = useState<boolean>();
 
-  const paymentMethods = [
-    {
-      key: 'PIX',
-      value: 'PIX'
-    },
-    {
-      key: 'CC',
-      value: 'Cartão de Crédito'
-    },
-    {
-      key: 'CB',
-      value: 'Cartão de Débito'
-    },
-    {
-      key: 'DIN',
-      value: 'Dinheiro'
-    },
-  ]
-
-  const paymentStatus = [
-    {
-      key: 'P',
-      value: 'Pago'
-    },
-    {
-      key: 'PEN',
-      value: 'Pendente'
-    }
-  ]
-
   useEffect(() => {
-    setIsLoaded(false)
-    const projectsRef = ref(db, 'projects');
-
-    const unsubscribe = onValue(projectsRef, (snapshot) => {
-
-      const data = snapshot.val() as
-      | Record<string, { name: string; createdAt: number }>
-      | null;
-
-      if(data){
-        const projectsArray: Supplier[] = Object.entries(data).map(
-        ([id, raw]) => ({
-          id,
-          name: raw.name,
-          createdAt: raw.createdAt
-        }))
-
-        setProjects(projectsArray);
+    setIsLoaded(false);
+    async function fetchProjects() {
+      const res = await viewProjects();
+      console.log(res.projects);
+      if (res.success && Array.isArray(res.projects)) {
+                setProjects(res.projects.map((p) => ({
+                  slug: p.slug,
+                  name: p.name,
+                  createdAt: p.createdAt
+                })));
+        setLoadingError(false);
       } else {
         setProjects([]);
+        setLoadingError(true);
+        toast.error(res.error || "Erro ao buscar projetos.");
       }
-      
-      setLoadingError(false);
       setIsLoaded(true);
-    }, (databaseError) => {
-      console.error("Error fetching projects:", databaseError);
-      toast.error("Erro no Banco de Dados.");
-      setLoadingError(true);
-      setProjects([]);
-      setIsLoaded(false);
-    })
-
-    return () => {
-      console.log("Detaching Realtime Database listener for /projects");
-      unsubscribe();
     }
-  }, [])
+    fetchProjects();
+  }, []);
   
 
   const handleSubmit = async (prevState: any, formData: FormData) => {
@@ -160,6 +127,23 @@ const BillsToRecieveForm = () => {
       <div className='p-4 mt-5 w-1/3 h-1/2'>
         <form action={formAction} className='flex flex-col gap-5'>
           <div>
+            <Label htmlFor="name" className="forms-label">Nome da Conta</Label>
+            <Input
+              placeholder="Ex: Primeira Parcela do Projeto X"
+              name="name"
+              id="name"
+              className="forms-input"
+            />
+            {errors.name && (
+              errors.name.map((error: string, i: number) => (
+                <div key={i}>
+                  <p className="forms-error" key={i}>{error}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div>
             <Label className='forms-label' htmlFor='project'>Projeto</Label>
             {
               (isLoaded) ? (
@@ -169,12 +153,15 @@ const BillsToRecieveForm = () => {
                     items={
                       projects
                     ? projects
-                        .slice()                                   
-                        .sort((a, b) => a.createdAt - b.createdAt)
-                        .map((s) => ({
-                          key: s.id,
-                          value: s.name
-                        }))
+                        .slice()
+                        .sort((a, b) => a.createdAt! - b.createdAt!)
+                        .map((p) => {
+                          console.log('Project option:', p.slug, p.name);
+                          return {
+                            key: p.slug,
+                            value: p.name
+                          };
+                        })
                     : []
                     }
                     selectLabel='Projetos'

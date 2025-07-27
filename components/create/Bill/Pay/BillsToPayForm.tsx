@@ -11,16 +11,36 @@ import { billsToPayFormSchema, supplierFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { db } from '@/firebase/firebase';
-import { ref, onValue, off } from 'firebase/database';
+import { viewSuppliers } from '@/lib/supplier/view/actions';
 import { createBillToPay } from '@/lib/bill/pay/create/actions';
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
 
-type Supplier = {
+export type Supplier = {
   id: string;
-  createdAt: number;
   name: string;
-}
+  cnpj: string;
+  address: string;
+  pnumber: string;
+  description: string;
+  slug: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+const paymentMethods = [
+  { key: 'PIX', value: 'PIX' },
+  { key: 'CC', value: 'Cartão de Crédito' },
+  { key: 'CB', value: 'Cartão de Débito' },
+  { key: 'DIN', value: 'Dinheiro' },
+  { key: 'BOL', value: 'Boleto' },
+  { key: 'TRF', value: 'Transferência' },
+];
+
+const paymentStatus = [
+  { key: 'P', value: 'Pago' },
+  { key: 'PEN', value: 'Pendente' },
+  { key: 'ATR', value: 'Atrasado' },
+];
 
 const BillsToPayForm = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -31,77 +51,22 @@ const BillsToPayForm = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>();
   const [loadingError, setLoadingError] = useState<boolean>();
 
-  const paymentMethods = [
-    {
-      key: 'PIX',
-      value: 'PIX'
-    },
-    {
-      key: 'CC',
-      value: 'Cartão de Crédito'
-    },
-    {
-      key: 'CB',
-      value: 'Cartão de Débito'
-    },
-    {
-      key: 'DIN',
-      value: 'Dinheiro'
-    },
-  ]
-
-  const paymentStatus = [
-    {
-      key: 'P',
-      value: 'Pago'
-    },
-    {
-      key: 'PEN',
-      value: 'Pendente'
-    }
-  ]
 
   useEffect(() => {
     setIsLoaded(false);
-
-    const suppliersRef = ref(db, 'suppliers');
-
-    const unsubscribe = onValue(suppliersRef, (snapshot) => {
-      const data = snapshot.val() as
-      | Record<string, { name: string; createdAt: number }>
-      | null;
-
-      console.log("In real time data: ", data);
-      
-      if(data){
-        const suppliersArray: Supplier[] = Object.entries(data).map(
-        ([id, raw]) => ({
-          id,
-          name: raw.name,
-          createdAt: raw.createdAt
-        }))
-
-        setSuppliers(suppliersArray);
+    const fetchSuppliers = async () => {
+      const res = await viewSuppliers();
+      if (res.success && Array.isArray(res.suppliers)) {
+        setSuppliers(res.suppliers);
+        setLoadingError(false);
       } else {
-        console.log("No suppliers found.");
         setSuppliers([]);
+        setLoadingError(true);
       }
-      
-      setLoadingError(false);
       setIsLoaded(true);
-    }, (databaseError) => {
-      console.error("Error fetching suppliers:", databaseError);
-      toast.error("Erro no Banco de Dados.");
-      setLoadingError(true);
-      setSuppliers([]);
-      setIsLoaded(false);
-    })
-
-    return () => {
-      console.log("Detaching Realtime Database listener for /suppliers");
-      unsubscribe();
-    }
-  }, [])
+    };
+    fetchSuppliers();
+  }, []);
   
 
   const handleSubmit = async (prevState: any, formData: FormData) => {
@@ -287,7 +252,7 @@ const BillsToPayForm = () => {
                     suppliers
                   ? suppliers
                       .slice()                                   
-                      .sort((a, b) => a.createdAt - b.createdAt)
+                      .sort((a, b) => a.createdAt! - b.createdAt!)
                       .map((s) => ({
                         key: s.id,
                         value: s.name

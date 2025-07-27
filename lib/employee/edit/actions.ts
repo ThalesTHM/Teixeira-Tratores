@@ -1,7 +1,7 @@
 "use server";
 
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
-import { employeeFormSchema } from "../create/validation";
+import { employeeFormSchema } from "./validation";
 import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
 import { getEmployeeBySlug } from "../view/actions";

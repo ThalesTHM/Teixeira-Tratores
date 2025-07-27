@@ -3,6 +3,18 @@
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
 
+export type Project = {
+  id?: string;
+  name: string;
+  expectedBudget: number;
+  deadline: number;
+  description: string;
+  client: string;
+  slug: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+
 export const viewProjects = async () => {
   const session = await getUserFromSession();
   if (!session) {
@@ -11,7 +23,7 @@ export const viewProjects = async () => {
   try {
     const projectsCollection = adminFirestore.collection("projects");
     const snapshot = await projectsCollection.get();
-    const projects = snapshot.docs.map((doc) => doc.data());
+    const projects: Project[] = snapshot.docs.map((doc) => doc.data() as Project);
     return { success: true, error: "", projects };
   } catch (error) {
     return { success: false, error: "Error fetching projects.", projects: [] };
@@ -27,9 +39,10 @@ export const getProjectBySlug = async (slug: string) => {
     const projectsCollection = adminFirestore.collection("projects");
     const snapshot = await projectsCollection.where("slug", "==", slug).limit(1).get();
     if (snapshot.empty) {
-      return { success: false, error: "Project not found.", project: null };
+      return { success: false, error: "Project not found.", project: undefined };
     }
-    return { success: true, error: "", project: snapshot.docs[0].data() };
+    const project = snapshot.docs[0].data() as Project;
+    return { success: true, error: "", project };
   } catch (error) {
     return { success: false, error: "Error fetching project.", project: null };
   }

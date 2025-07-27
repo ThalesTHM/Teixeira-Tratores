@@ -70,14 +70,43 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ slug }) => {
       return prevState;
     }
     toast.success("Projeto editado com sucesso!");
-    setProject({
-      ...project!,
-      name: String(formValues.name ?? ""),
-      expectedBudget: Number(formValues.expectedBudget),
-      deadline: Number(formValues.deadline),
-      description: String(formValues.description ?? ""),
-      client: String(formValues.client ?? "")
-    });
+    // Refetch the updated project from backend to ensure UI is up to date
+    const updatedRes = await getProjectBySlug(slug);
+    if (updatedRes.success && updatedRes.project) {
+      setProject({
+        name: updatedRes.project.name || "",
+        expectedBudget:
+          typeof updatedRes.project.expectedBudget === "number"
+            ? updatedRes.project.expectedBudget
+            : 0,
+        deadline:
+          typeof updatedRes.project.deadline === "number"
+            ? updatedRes.project.deadline
+            : 0,
+        description: updatedRes.project.description || "",
+        client: updatedRes.project.client || "",
+        createdAt:
+          typeof updatedRes.project.createdAt === "number"
+            ? updatedRes.project.createdAt
+            : 0,
+      });
+      // Update clientName after edit
+      if (updatedRes.project.client) {
+        const found = clients.find((c) => c.id === updatedRes.project.client);
+        if (found && found.name) {
+          setClientName(found.name);
+        } else {
+          const clientRes = await getClientById(updatedRes.project.client);
+          if (clientRes.success && clientRes.client && typeof clientRes.client.name === "string") {
+            setClientName(clientRes.client.name);
+          } else {
+            setClientName("");
+          }
+        }
+      } else {
+        setClientName("");
+      }
+    }
     setEditMode(false);
     return prevState;
   };
@@ -109,8 +138,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ slug }) => {
           name: res.project.name || "",
           expectedBudget:
             typeof res.project.expectedBudget === "number"
-              ? res.project.expectedBudget
-              : res.project.value || 0,
+              && res.project.expectedBudget || 0,
           deadline:
             typeof res.project.deadline === "number"
               ? res.project.deadline
@@ -246,13 +274,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ slug }) => {
                 clientsLoading ? (
                   <SelectSkeleton selectionText="Selecione o Cliente" />
                 ) : (
-                  <SelectInput
-                    name="client"
-                    items={clients.map((c) => ({ key: c.id, value: c.name }))}
-                    selectLabel="Clientes"
-                    placeholder="Selecione o Cliente"
-                    defaultValue={project.client} // pre-select the current client
-                  />
+                <SelectInput
+                  name="client"
+                  items={clients.map((c) => ({ key: c.id, value: c.name }))}
+                  selectLabel="Clientes"
+                  placeholder="Selecione o Cliente"
+                  defaultValue={project.client}
+                />
                 )
               ) : (
                 clientName || "-"

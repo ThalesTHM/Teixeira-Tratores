@@ -3,8 +3,18 @@
 import { getUserFromSession } from "@/lib/auth";
 import { adminFirestore } from "@/firebase/firebase-admin";
 
-// Function to view all client attributes if user is logged in
-export const viewClients = async () => {
+type Client = {
+    id: string;
+    name: string;
+    cnpj: string;
+    address: string;
+    pnumber: string;
+    slug: string;
+    createdAt?: number;
+    updatedAt?: number;
+};
+
+export const viewClients = async (): Promise<{ success: boolean; error: string; clients: Client[] }> => {
     const session = await getUserFromSession();
     if (!session) {
         return {
@@ -15,7 +25,19 @@ export const viewClients = async () => {
     }
     try {
         const clientsSnapshot = await adminFirestore.collection('clients').get();
-        const clients = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const clients: Client[] = clientsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data?.name ?? '',
+                cnpj: data?.cnpj ?? '',
+                address: data?.address ?? '',
+                pnumber: data?.pnumber ?? '',
+                slug: data?.slug ?? '',
+                createdAt: data?.createdAt,
+                updatedAt: data?.updatedAt,
+            };
+        });
         return {
             success: true,
             clients,
@@ -57,7 +79,7 @@ export const getClientBySlug = async (slug: string) => {
     }
 };
 
-export const getClientById = async (id: string) => {
+export const getClientById = async (id: string): Promise<{ success: boolean; error: string; client: Client | null }> => {
     const session = await getUserFromSession();
     if (!session) {
         return {
@@ -75,9 +97,20 @@ export const getClientById = async (id: string) => {
                 client: null
             };
         }
+        const data = clientDoc.data();
+        const client: Client = {
+            id: clientDoc.id,
+            name: data?.name ?? '',
+            cnpj: data?.cnpj ?? '',
+            address: data?.address ?? '',
+            pnumber: data?.pnumber ?? '',
+            slug: data?.slug ?? '',
+            createdAt: data?.createdAt,
+            updatedAt: data?.updatedAt,
+        };
         return {
             success: true,
-            client: { id: clientDoc.id, ...clientDoc.data() },
+            client,
             error: ""
         };
     } catch (error) {

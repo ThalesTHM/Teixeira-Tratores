@@ -4,6 +4,12 @@ import { getUserFromSession } from "@/lib/auth";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
+import { nanoid } from "nanoid";
+
+function generateSlug() {
+    // Example: abcd12-efg34-hijk56-lmnop7
+    return [nanoid(), nanoid(), nanoid(), nanoid()].join('-');
+}
 
 export const createEmployee = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -22,7 +28,8 @@ export const createEmployee = async (formData: FormData) => {
         pnumber: formData.get('pnumber') as string,
         cpf: formData.get('cpf') as string,
         address: formData.get('address') as string,
-        used: false
+        used: false,
+        slug: generateSlug()
     }
 
     try {
