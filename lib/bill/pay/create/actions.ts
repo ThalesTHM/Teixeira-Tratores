@@ -3,8 +3,8 @@
 import { getUserFromSession } from "@/lib/auth";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
-import { adminAuth, adminDB } from "@/firebase/firebase-admin";
-import { push, ref, set } from "firebase/database";
+import { adminFirestore } from "@/firebase/firebase-admin";
+import { nanoid } from "nanoid";
 
 export const createBillToPay = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -16,6 +16,8 @@ export const createBillToPay = async (formData: FormData) => {
         }
     }
 
+    const slug = [nanoid(10), nanoid(10), nanoid(10), nanoid(10), nanoid(10)].join('-');
+    
     const billData = {
         name: formData.get('name'),
         price: Number(formData.get('price')),
@@ -23,7 +25,9 @@ export const createBillToPay = async (formData: FormData) => {
         paymentMethod: formData.get('paymentMethod'),
         paymentStatus: formData.get('paymentStatus'),
         supplier: formData.get('supplier'),
-        description: formData.get('description')
+        description: formData.get('description'),
+        slug,
+        createdAt: Date.now()
     }
 
     try{
@@ -39,22 +43,9 @@ export const createBillToPay = async (formData: FormData) => {
         }
     }
 
-    const uid = session.uid;
-
     try {
-        const billsToPayRef = adminDB.ref(`billsToPay`);
-        const newBillsToPayRef = billsToPayRef.push();
-
-        await newBillsToPayRef.set({
-            name: billData.name,
-            price: billData.price,
-            expireDate: billData.expireDate,
-            paymentMethod: billData.paymentMethod,
-            paymentStatus: billData.paymentStatus,
-            supplier: billData.supplier,
-            description: billData.description,
-            createdAt: Date.now()
-        });
+        const billsCollection = adminFirestore.collection('billsToPay');
+        await billsCollection.add(billData);
     } catch (error) {
         return {
             success: false,

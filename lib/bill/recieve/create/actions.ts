@@ -3,8 +3,8 @@
 import { getUserFromSession } from "@/lib/auth";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
-import { adminAuth, adminDB } from "@/firebase/firebase-admin";
-import { push, ref, set } from "firebase/database";
+import { nanoid } from "nanoid";
+import { adminFirestore } from "@/firebase/firebase-admin";
 
 export const createBillToRecieve = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -17,12 +17,14 @@ export const createBillToRecieve = async (formData: FormData) => {
     }
 
     const billData = {
+        name: formData.get('name'),
         price: Number(formData.get('price')),
         expireDate: (new Date(formData.get('expireDate') as string)).getTime(),
         paymentMethod: formData.get('paymentMethod'),
         paymentStatus: formData.get('paymentStatus'),
         description: formData.get('description'),
-        project: formData.get('project')
+        project: formData.get('project'),
+        slug: `${nanoid(10)}-${nanoid(10)}-${nanoid(10)}-${nanoid(10)}-${nanoid(10)}`
     }
 
     try{
@@ -30,7 +32,6 @@ export const createBillToRecieve = async (formData: FormData) => {
     } catch (error) {
         if (error instanceof z.ZodError) {
             const fieldErrors = error.flatten().fieldErrors;
-
             return {
                 success: false,
                 error: fieldErrors
@@ -38,25 +39,16 @@ export const createBillToRecieve = async (formData: FormData) => {
         }
     }
 
-    const uid = session.uid;
-
     try {
-        const billsToRecieveRef = adminDB.ref(`billsToRecieve`);
-        const newBillsToRecieveRef = billsToRecieveRef.push();
-
-        await newBillsToRecieveRef.set({
-            project: formData.get('project'),
-            price: billData.price,
-            expireDate: billData.expireDate,
-            paymentMethod: billData.paymentMethod,
-            paymentStatus: billData.paymentStatus,
-            description: billData.description,
+        const billsCollection = adminFirestore.collection('billsToReceive');
+        await billsCollection.add({
+            ...billData,
             createdAt: Date.now()
         });
     } catch (error) {
         return {
             success: false,
-            error:  "Error Creating Bill To Recieve"
+            error:  "Error Creating Bill To Receive"
         }
     }
 
