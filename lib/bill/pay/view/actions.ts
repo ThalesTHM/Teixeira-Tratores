@@ -19,7 +19,7 @@ export const getBillsToPayBySlug = async (slug: string) => {
     }
 
     const billData = billSnapshot.docs[0].data();
-    return { success: true, data: billData, error: '' };
+    return { success: true, bill: billData, error: '' };
   } catch (error) {
     return { success: false, error: 'Error retrieving the bill' };
   }
@@ -41,7 +41,7 @@ export const viewBillsToPay = async () => {
     }
 
     const billsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return { success: true, data: billsData, error: '' };
+    return { success: true, bills: billsData, error: '' };
   } catch (error) {
     return { success: false, error: 'Error retrieving bills' };
   }

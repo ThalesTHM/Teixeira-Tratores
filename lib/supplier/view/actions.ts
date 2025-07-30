@@ -82,7 +82,7 @@ export const getSupplierById = async (supplierId: string) => {
     if (!supplierDoc.exists) {
       return { success: false, error: 'Supplier not found' };
     }
-    return { success: true, data: supplierDoc.data(), error: '' };
+    return { success: true, supplier: supplierDoc.data(), error: '' };
   } catch (error) {
     return { success: false, error: 'Error fetching supplier' };
   }
