@@ -67,7 +67,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
         setBill({ ...bill, supplier: previousSupplierValue ?? '' });
         if (previousSupplierValue) {
           const supplierRes = await getSupplierById(previousSupplierValue);
-          if (supplierRes.success && supplierRes.data?.name) setSupplierName(supplierRes.data.name);
+          if (supplierRes.success && supplierRes.supplier?.name) setSupplierName(supplierRes.supplier.name);
           else setSupplierName('');
         } else {
           setSupplierName('');
@@ -82,7 +82,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
       setBill({ ...bill, supplier: previousSupplierValue ?? '' });
       if (previousSupplierValue) {
         const supplierRes = await getSupplierById(previousSupplierValue);
-        if (supplierRes.success && supplierRes.data?.name) setSupplierName(supplierRes.data.name);
+        if (supplierRes.success && supplierRes.supplier?.name) setSupplierName(supplierRes.supplier.name);
         else setSupplierName('');
       } else {
         setSupplierName('');
@@ -99,7 +99,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
     // Update supplier name after edit
     if (formValues.supplier) {
       const supplierRes = await getSupplierById(formValues.supplier as string);
-      if (supplierRes.success && supplierRes.data?.name) setSupplierName(supplierRes.data.name);
+      if (supplierRes.success && supplierRes.supplier?.name) setSupplierName(supplierRes.supplier.name);
       else setSupplierName('');
     } else {
       setSupplierName('');
@@ -132,13 +132,13 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
       setLoading(true);
       // Fetch bill
       const res = await getBillsToPayBySlug(slug);
-      if (res.success && res.data) {
-        setBill(res.data);
+      if (res.success && res.bill) {
+        setBill(res.bill);
         setError('');
         // Fetch supplier name
-        if (res.data.supplier) {
-          const supplierRes = await getSupplierById(res.data.supplier);
-          if (supplierRes.success && supplierRes.data?.name) setSupplierName(supplierRes.data.name);
+        if (res.bill.supplier) {
+          const supplierRes = await getSupplierById(res.bill.supplier);
+          if (supplierRes.success && supplierRes.supplier?.name) setSupplierName(supplierRes.supplier.name);
           console.log(supplierRes);
         }
       } else {
