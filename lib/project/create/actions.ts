@@ -5,6 +5,7 @@ import { z } from "zod";
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { projectFormSchema } from "./validation";
 import { customAlphabet } from "nanoid";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 
@@ -49,7 +50,6 @@ export const createProject = async (formData: FormData) => {
         }
     }
 
-    const uid = session.uid;
     const slug = generateSlug((projectData.name ?? "") as string);
 
     try {
@@ -68,6 +68,24 @@ export const createProject = async (formData: FormData) => {
             success: false,
             error:  "Error Creating Project",
         }
+    }
+
+    const notification = {
+        message: `Projeto "${projectData.name}" Foi Criado.`,
+        role: NotificationRole.ADMIN,
+        slug,
+        createdBy: session.name,
+        notificationSource: NotificationSource.PROJECT
+    }
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+        console.error("Error creating notification:", notificationRes.error);
+        return {
+            success: false,
+            error: "Error creating notification"
+        };
     }
 
     return {

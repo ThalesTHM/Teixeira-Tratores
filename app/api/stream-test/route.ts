@@ -1,5 +1,6 @@
-import { adminDB } from "@/firebase/firebase-admin";
+import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
+import { NotificationRole } from "@/services/notifications/notifications-service";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -9,34 +10,34 @@ export async function GET(req: NextRequest) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const role = session.role;
+
+  const rolePriority = role === 'admin' ? NotificationRole.ADMIN :
+      role === 'manager' ? NotificationRole.MANAGER :
+      NotificationRole.EMPLOYEE
+
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n")); // optional auto-reconnect
+  writer.write(encoder.encode("retry: 3000\n\n"));
 
-  const ref = adminDB.ref("/clients");
+  const notificationsRef = adminFirestore.collection("notifications")
+    .where('role', '>=', rolePriority)
+    .orderBy("role", "desc")
+    .orderBy("createdAt", "desc");
 
-  const callback = (snapshot: any) => {
-    const rawData = snapshot.val();
-    if (!rawData) return;
-
-    const parsed = Object.keys(rawData)
-      .filter((key: string) => rawData[key].cpf === "757.485.510-20")
-      .map((key: string) => ({
-        id: key,
-        active: rawData[key].active,
-        ...rawData[key],
-      }));
-
-    const payload = `data: ${JSON.stringify(parsed)}\n\n`;
+  const unsubscribe = notificationsRef.onSnapshot(snapshot => {
+    const notifications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    const payload = `data: ${JSON.stringify(notifications)}\n\n`;
     writer.write(encoder.encode(payload));
-  };
-
-  ref.on("value", callback);
+  });
 
   req.signal.addEventListener("abort", () => {
-    ref.off("value", callback);
+    unsubscribe();
     writer.close();
   });
 

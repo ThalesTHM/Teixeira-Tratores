@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 
 type DataItem = {
-  id: string;
-  active: boolean;
   [key: string]: any;
 };
 
@@ -15,7 +13,7 @@ export default function LiveData() {
     const eventSource = new EventSource("/api/stream-test");
 
     eventSource.onmessage = (event) => {
-      const parsed: DataItem[] = JSON.parse(event.data);
+      const parsed = JSON.parse(event.data);
       setData(parsed);
     };
 
