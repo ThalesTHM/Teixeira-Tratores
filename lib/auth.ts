@@ -345,7 +345,7 @@ export const createUser = async ({ email, password }: { email: string, password:
     await setEmailInviteUsed(email);
     await createUserDocument(email, userRecord.uid);
 
-    const token = await adminAuth.createCustomToken(userRecord.uid, { role: emailInvite.role });
+    const token = await adminAuth.createCustomToken(userRecord.uid);
 
     return { success: true, userToken: token, error: "" };
   } catch (error) {
