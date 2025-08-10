@@ -125,15 +125,19 @@
 
 @layer utilities{
   .main-auth-form-container {
-    @apply min-w-full min-h-full flex items-center justify-center;
+    @apply w-full h-full flex items-center justify-center;
   }
 
   .auth-form-container {
-    @apply min-w-1/4 border-10 px-6 py-20 p-30 flex flex-col space-y-8;
+    @apply w-1/4 border-10 px-6 py-20 p-30 flex flex-col space-y-8;
   }
 
   .auth-form-submit-button {
     @apply w-full mt-8 cursor-pointer;
+  }
+
+  .auth-form-bottom {
+    margin-top: auto !important;
   }
 
   .auth-form-error {

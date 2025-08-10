@@ -6,7 +6,8 @@ import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
 import { emailRecoverFormSchema } from '@/lib/validation';
 import { toast } from 'sonner';
-import { requestPasswordRecovery } from '@/lib/auth'; // Assume this is your Next.js 15 action
+import { requestPasswordRecovery } from '@/lib/auth';
+import Link from 'next/link';
 
 const PasswordRecovery = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -72,6 +73,7 @@ const PasswordRecovery = () => {
     }
 
     toast.error("Um erro não esperado ocorreu.");
+    
     return {
       ...prevState,
       error: "An unexpected error has occurred",
@@ -85,37 +87,42 @@ const PasswordRecovery = () => {
   });
 
   return (
-    <div className='main-auth-form-container'>
-      <div className='auth-form-container'>
-        <form action={formAction}>
-          <div>
-            <label htmlFor="email">Email</label>
-            <Input
-              id="email"
-              name="email"
-              placeholder='SeuEmail@site.com'
-              required
-            />
-            {errors.email && (
-              errors.email.map((error: string, i: number) => (
-                <>
-                  <div key={i}>
+    <div className='min-h-screen flex items-center justify-center bg-slate-50'>
+      <div className='auth-form-container !p-0 h-[420px] min-h-[420px]'>
+        <form action={formAction} className="flex flex-col h-full w-full">
+          <div className="flex flex-col justify-center h-1/2 w-full items-center p-2">
+            <div className="w-full flex flex-col gap-2">
+              <label htmlFor="email" className="text-left w-full">Email</label>
+              <Input
+                id="email"
+                name="email"
+                placeholder='SeuEmail@site.com'
+                required
+              />
+              {errors.email && (
+                errors.email.map((error: string, i: number) => (
+                  <div key={i} className="w-full text-center">
                     <p className="auth-form-error" key={i}>{error}</p>
-                    <br />
                   </div>
-                </>
-              ))
-            )
-            }
+                ))
+              )}
+            </div>
           </div>
-
-          <Button
-            type='submit'
-            className='auth-form-submit-button'
-            disabled={isPending}
-          >
-            {isPending ? 'Enviando...' : 'Recuperar Senha'}
-          </Button>
+          
+          <div className="flex flex-col gap-2 w-full mt-8 auth-form-bottom !p-0 !px-0 !py-0">
+            <Button
+              type='submit'
+              className='auth-form-submit-button w-full'
+              disabled={isPending}
+            >
+              {isPending ? 'Enviando...' : 'Recuperar Senha'}
+            </Button>
+            <div className="flex justify-center items-center w-full mt-10">
+              <Link href='/auth/password-update' className="w-full text-center">
+                <span className="text-xs text-blue-500 hover:underline">Já tem um código? Atualizar senha</span>
+              </Link>
+            </div>
+          </div>
         </form>
       </div>
     </div>

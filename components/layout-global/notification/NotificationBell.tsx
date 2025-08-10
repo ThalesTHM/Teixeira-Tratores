@@ -53,7 +53,7 @@ const NotificationBell = () => {
   
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center z-10">
       <div
         ref={bellRef}
         className="rounded-full bg-slate-50 cursor-pointer border-1 shadow-lg"

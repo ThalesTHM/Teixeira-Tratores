@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
-import NavbarMenuBar from './NavbarMenuBar'
-import NotificationBell from './NotificationBell'
+import NavbarMenuBar from './navbar-menu/NavbarMenuBar'
+import NotificationBell from './notification/NotificationBell'
 import LogoutButton from './LogoutButton'
+import AdminNavbar from './navbar-menu/AdminNavbar'
 
 const Navbar = () => {
   return (
@@ -19,6 +20,7 @@ const Navbar = () => {
             </Link>
 
             <div className="flex items-center gap-3 text-black">
+                <AdminNavbar />
                 <NavbarMenuBar menuTitle='visualizar' />
                 <NavbarMenuBar menuTitle='cadastrar' />
                 <NotificationBell />

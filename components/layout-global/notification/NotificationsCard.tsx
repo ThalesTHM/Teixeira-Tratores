@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react'
-import { Notification } from './types';
+import { Notification } from '../types';
 import Link from 'next/link';
 import { marknotificaitonsAsRead } from '@/lib/notification/actions';
 
@@ -9,7 +9,7 @@ const NotificationCard = ({ notification }: { notification: Notification}) => {
   return (
     <Link 
       href={`/visualizando/${notification.notificationSource}/${notification.slug}`} 
-      className={`w-full p-2 ${notification.read ? 'bg-gray-300' : 'bg-gray-100'} flex flex-row select-none relative`}
+      className={`w-full p-2 ${notification.read ? 'bg-gray-300' : 'bg-gray-100'} flex flex-row select-none relative z-10`}
       onClick={ () => marknotificaitonsAsRead(notification.id) }
     >
       <div className='w-1/6 flex items-center justify-center select-none'>

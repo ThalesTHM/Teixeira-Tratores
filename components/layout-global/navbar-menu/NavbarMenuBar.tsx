@@ -58,8 +58,9 @@ const NavbarMenuBar = (props: { menuTitle: string }) => {
             </MenubarSubContent>
           </MenubarSub>
           
+{/*           
           <MenubarSeparator />
-
+          
           <MenubarSub>
             <MenubarSubTrigger>Equipamento</MenubarSubTrigger>
             <MenubarSubContent>
@@ -83,8 +84,8 @@ const NavbarMenuBar = (props: { menuTitle: string }) => {
               <Link href={`/${menuTitle}/conta/maquinario`}>
                 <MenubarItem>{capitalize(menuTitle)} {menuTitle == "visualizar" ? "Contas dos Maquinários" : "Conta do Maquinário"}</MenubarItem>
               </Link>
-            </MenubarSubContent>
-          </MenubarSub>
+            </MenubarSubContent> 
+          </MenubarSub> */}
         </MenubarContent>    
       </MenubarMenu>
     </Menubar>
