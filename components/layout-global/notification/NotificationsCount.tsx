@@ -5,7 +5,7 @@ const NotificationsCount = (props: { count: number }) => {
   
   return (
     <div className='bg-red-600'>
-        <span className='absolute -top-0.5 -right-0.5 text-white font-bold text-xs bg-red-600 rounded-full px-1'>
+        <span className='absolute -top-0.5 -right-0.5 text-white font-bold text-xs bg-red-600 rounded-full px-1 z-10'>
             {count}
         </span>
     </div>

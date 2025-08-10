@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { passwordRecoveryFormSchema } from '@/lib/validation';
 import { toast } from 'sonner';
 import { changePassword } from '@/lib/auth';
+import Link from 'next/link';
 
 const PasswordUpdate = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -53,7 +54,7 @@ const PasswordUpdate = () => {
   });
 
   return (
-    <div className="main-auth-form-container">
+    <div className="main-auth-form-container !h-screen">
       <div className="auth-form-container">
         <form action={formAction}>
           <div>
@@ -130,6 +131,12 @@ const PasswordUpdate = () => {
           >
             {isPending ? 'Atualizando...' : 'Atualizar Senha'}
           </Button>
+
+          <div className="flex justify-center items-center w-full">
+            <Link href='/auth/login' className="w-full text-center">
+              <span className="text-xs text-blue-500 hover:underline">Já atualizou a senha? Logar</span>
+            </Link>
+          </div>
         </form>
       </div>
     </div>

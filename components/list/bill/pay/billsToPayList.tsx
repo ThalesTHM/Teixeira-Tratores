@@ -16,10 +16,11 @@ const BillsToPayList = () => {
       setLoading(true);
       try {
         const res = await viewBillsToPay();
-        if (res.success && Array.isArray(res.data)) {
-          setBills(res.data);
+        
+        if (res.success && Array.isArray(res.bills)) {
+          setBills(res.bills);
           setError("");
-        } else if (res.success && res.data === null) {
+        } else if (res.success && res.bills === null) {
           setBills([]);
           setError("");
         } else {
