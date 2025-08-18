@@ -5,6 +5,7 @@ import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
 import { nanoid } from "nanoid";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 function generateSlug() {
     // Example: abcd12-efg34-hijk56-lmnop7
@@ -21,6 +22,8 @@ export const createEmployee = async (formData: FormData) => {
         }
     }
 
+    const slug = generateSlug();
+
     const employeeData = {
         name: formData.get('name') as string,
         email: formData.get('email') as string,
@@ -29,7 +32,7 @@ export const createEmployee = async (formData: FormData) => {
         cpf: formData.get('cpf') as string,
         address: formData.get('address') as string,
         used: false,
-        slug: generateSlug()
+        slug: slug
     }
 
     try {
@@ -56,6 +59,24 @@ export const createEmployee = async (formData: FormData) => {
             success: false,
             error: "Error Creating Employee",
         }
+    }
+
+    const notification = {
+        message: `Funcionário "${employeeData.name}" Foi Convidado.`,
+        role: NotificationRole.MANAGER,
+        createdBy: session.name,
+        slug: slug,
+        notificationSource: NotificationSource.EMPLOYEE
+    }
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+        console.error("Error creating notification:", notificationRes.error);
+        return {
+            success: false,
+            error: "Error creating notification"
+        };
     }
 
     return {

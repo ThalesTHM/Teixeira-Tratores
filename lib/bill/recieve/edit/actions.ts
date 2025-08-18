@@ -3,8 +3,21 @@
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { getUserFromSession } from "@/lib/auth";
 
 export const editBillToReceive = async (slug: string, formData: any) => {
+  const session = await getUserFromSession();
+  
+  if (!session) {
+    return {
+      success: false,
+      error: "User Not Authenticated",
+    };
+  }
+
+  let billDoc;
+  
   try {
     await billsToRecieveFormSchema.parseAsync(formData);
   } catch (error) {
@@ -22,23 +35,19 @@ export const editBillToReceive = async (slug: string, formData: any) => {
   }
 
   try {
-    const billDoc = await adminFirestore.collection("billsToReceive")
+    billDoc = await adminFirestore.collection("billsToReceive")
     .where("slug", "==", slug)
-    .where("name", "==", formData.name)
-    .where("price", "==", formData.price)
-    .where("expireDate", "==", formData.expireDate)
-    .where("paymentMethod", "==", formData.paymentMethod)
-    .where("paymentStatus", "==", formData.paymentStatus)
-    .where("description", "==", formData.description)
-    .where("project", "==", formData.project)
     .get();
 
-  if (!billDoc.empty) {
-          return {
-            success: false,
-            error: "No changes detected."
-    };
-  }
+    if (billDoc.empty) {
+      return { success: false, error: 'Bill not found.' };
+    }
+
+    const doc = billDoc.docs[0].data();
+
+    if (JSON.stringify(doc) === JSON.stringify(formData)) {
+      return { success: false, error: 'No changes detected.' };
+    }
   } catch (error) {
         return {
           success: false,
@@ -68,6 +77,27 @@ export const editBillToReceive = async (slug: string, formData: any) => {
       error: "Error editing bill to receive.",
     };
   }
+
+  const name = billDoc.docs[0].data().name || "Conta a Receber";
+
+  const notification = {
+      message: `Conta a Receber "${name}" Foi Editada.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      priority: NotificationPriority.LOW,
+      notificationSource: NotificationSource.BILL_TO_RECEIVE
+  }
+  
+  const notificationRes = await NotificationsService.createNotification(notification);
+
+  if (!notificationRes.success) {
+    console.error("Error creating notification:", notificationRes.error);
+    return {
+        success: false,
+        error: "Error creating notification"
+    };
+  }
+
   return {
     success: true,
     error: ""

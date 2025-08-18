@@ -2,8 +2,7 @@
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
-import { clientFormSchema } from "@/lib/validation";
-import { z } from "zod";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 export const removeClient = async (slug: string) => {
   const session = await getUserFromSession();
@@ -17,7 +16,20 @@ export const removeClient = async (slug: string) => {
       return { success: false, error: 'Client not found.' };
     }
     const doc = querySnapshot.docs[0];
+    const name = doc.data().name || "Cliente";
     await doc.ref.delete();
+    // Notification
+    const notification = {
+      message: `Cliente "${name}" foi excluído.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      priority: NotificationPriority.MEDIUM,
+      notificationSource: NotificationSource.CLIENT
+    };
+    const notificationRes = await NotificationsService.createNotification(notification);
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
     return { success: true, error: '' };
   } catch (error) {
     return { success: false, error: 'Error excluding the client.' };

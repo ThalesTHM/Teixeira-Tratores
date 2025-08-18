@@ -1,4 +1,5 @@
 "use server";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
@@ -45,7 +46,7 @@ export const editProject = async (slug: string, data: any) => {
     ) {
       return { success: false, error: 'No changes detected. Please modify at least one field.' };
     }
-    // Only update fields that are defined
+    
     const updateData: Record<string, any> = {};
     if (typeof data.name !== 'undefined') updateData.name = data.name;
     if (typeof data.expectedBudget !== 'undefined') updateData.expectedBudget = data.expectedBudget;
@@ -53,6 +54,20 @@ export const editProject = async (slug: string, data: any) => {
     if (typeof data.description !== 'undefined') updateData.description = data.description;
     if (typeof data.client !== 'undefined') updateData.client = data.client;
     await doc.ref.update(updateData);
+
+    const name = currentData.name || "Projeto";
+    const notification = {
+      message: `Projeto "${name}" foi editado.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      slug: currentData.slug,
+      priority: NotificationPriority.LOW,
+      notificationSource: NotificationSource.PROJECT
+    };
+    const notificationRes = await NotificationsService.createNotification(notification);
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
     return { success: true, error: '' };
   } catch (error) {
     if (error instanceof Error) {

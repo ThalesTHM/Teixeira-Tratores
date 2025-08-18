@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { passwordRecoverySchema, signupFormSchema } from './auth-validation';
 import { z } from 'zod';
 import { sign } from 'crypto';
+import { NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/notifications-service';
 
 const getAllowedPasswordRecovery = async (email: string) => {
   const passwordRecoveryAllowedCollection = adminFirestore.collection('passwordRecoveryAllowed');
@@ -284,8 +285,26 @@ const createUserDocument = async (email: string, uid: string) => {
     pnumber: emailInvite.pnumber || "",
     cpf: emailInvite.cpf || "",
     address: emailInvite.address || "",
+    slug: emailInvite.slug || "",
     createdAt: Date.now(),
     updatedAt: Date.now(),
+  }
+
+  const notification = {
+      message: `Funcionário "${emailInvite.name}" Registrou a Sua Conta.`,
+      role: NotificationRole.MANAGER,
+      createdBy: emailInvite.name,
+      notificationSource: NotificationSource.EMPLOYEE
+  }
+  
+  const notificationRes = await NotificationsService.createNotification(notification);
+
+  if (!notificationRes.success) {
+      console.error("Error creating notification:", notificationRes.error);
+      return {
+          success: false,
+          error: "Error creating notification"
+      };
   }
 
   await adminFirestore.collection('users').doc(uid).set(userData);

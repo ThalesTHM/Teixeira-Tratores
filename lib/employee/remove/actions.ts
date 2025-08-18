@@ -1,8 +1,16 @@
 "use server";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
+import { getUserFromSession } from "@/lib/auth";
 
 export const removeEmployee = async (slug: string) => {
+  const session = await getUserFromSession()
+
+  if(!session){
+    return {success: false, error: 'User not authenticated.'}
+  }
+
   let employeesCollection;
   let snapshot;
   let doc;
@@ -30,7 +38,20 @@ export const removeEmployee = async (slug: string) => {
   }
 
   try {
+    const name = doc.data().name || "Funcionário";
     await doc.ref.delete();
+    // Notification
+    const notification = {
+      message: `Funcionário "${name}" foi excluído.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      priority: NotificationPriority.MEDIUM,
+      notificationSource: NotificationSource.EMPLOYEE
+    };
+    const notificationRes = await NotificationsService.createNotification(notification);
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
     return { success: true };
   } catch (error) {
     return { success: false, error: "Error Deleting Employee Document" };

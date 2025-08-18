@@ -5,6 +5,7 @@ import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { adminFirestore } from "@/firebase/firebase-admin";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 export const createBillToRecieve = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -50,6 +51,23 @@ export const createBillToRecieve = async (formData: FormData) => {
             success: false,
             error:  "Error Creating Bill To Receive"
         }
+    }
+    
+    const notification = {
+        message: `Conta a Receber "${billData.name}" Foi Criada.`,
+        role: NotificationRole.MANAGER,
+        createdBy: session.name,
+        notificationSource: NotificationSource.BILL_TO_RECEIVE
+    }
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+        console.error("Error creating notification:", notificationRes.error);
+        return {
+            success: false,
+            error: "Error creating notification"
+        };
     }
 
     return {

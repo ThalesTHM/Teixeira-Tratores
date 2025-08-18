@@ -1,4 +1,5 @@
 "use server";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
@@ -49,6 +50,20 @@ export const editSupplier = async (slug: string, data: any) => {
       address: data.address,
       pnumber: data.pnumber
     });
+    // Notification
+    const name = currentData.name || "Fornecedor";
+    const notification = {
+      message: `Fornecedor "${name}" foi editado.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      slug: currentData.slug,
+      priority: NotificationPriority.LOW,
+      notificationSource: NotificationSource.SUPPLIER
+    };
+    const notificationRes = await NotificationsService.createNotification(notification);
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
     return { success: true, error: '' };
   } catch (error) {
     return { success: false, error: 'Error editing the supplier.' };

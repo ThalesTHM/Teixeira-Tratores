@@ -17,7 +17,8 @@ export enum NotificationSource {
     BILL_TO_PAY = 'conta/conta-a-pagar',
     BILL_TO_RECEIVE = 'conta/conta-a-receber',
     CLIENT = 'cliente',
-    PROJECT = 'projeto'
+    PROJECT = 'projeto',
+    EMPLOYEE = 'funcionario'
 }
 
 export enum NotificationRole {

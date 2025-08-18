@@ -42,6 +42,8 @@ export const getProjectBySlug = async (slug: string) => {
       return { success: false, error: "Project not found.", project: undefined };
     }
     const project = snapshot.docs[0].data() as Project;
+    console.log(project);
+    
     return { success: true, error: "", project };
   } catch (error) {
     return { success: false, error: "Error fetching project.", project: null };

@@ -4,6 +4,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 export const editBillToPay = async (slug: string, data: any) => {
   const session = await getUserFromSession();
@@ -12,21 +13,22 @@ export const editBillToPay = async (slug: string, data: any) => {
     return { success: false, error: 'User not authenticated' };
   }
 
+  let billDoc;
+
   try {
     const billsCollection = adminFirestore.collection('billsToPay');
-    const billSnapshot = await billsCollection
+    billDoc = await billsCollection
       .where('slug', '==', slug)
-      .where('name', '==', data.name)
-      .where('price', '==', data.price)
-      .where('expireDate', '==', data.expireDate)
-      .where('paymentMethod', '==', data.paymentMethod)
-      .where('paymentStatus', '==', data.paymentStatus)
-      .where('supplier', '==', data.supplier)
-      .where('description', '==', data.description)
       .get();
 
-    if (!billSnapshot.empty) {
+    if (!billDoc.empty) {
       return { success: false, error: 'A bill with the same data already exists' };
+    }
+
+    const doc = billDoc.docs[0].data();
+
+    if (JSON.stringify(doc) === JSON.stringify(data)) {
+      return { success: false, error: "Bill not edited." };
     }
   } catch (error) {
     return { success: false, error: 'Error checking existing bill data' };
@@ -60,6 +62,22 @@ export const editBillToPay = async (slug: string, data: any) => {
       supplier: data.supplier,
       description: data.description
     });
+
+    const name = bill.data().name || "Conta a Pagar";
+
+    const notification = {
+      message: `Conta a Pagar "${name}" Foi Editada.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      priority: NotificationPriority.LOW,
+      notificationSource: NotificationSource.BILL_TO_PAY
+    };
+
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
 
     return { success: true, error: '' };
   } catch (error) {
