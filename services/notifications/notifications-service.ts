@@ -18,7 +18,8 @@ export enum NotificationSource {
     BILL_TO_RECEIVE = 'conta/conta-a-receber',
     CLIENT = 'cliente',
     PROJECT = 'projeto',
-    EMPLOYEE = 'funcionario'
+    EMPLOYEE = 'funcionario',
+    EMAIL_INVITE = 'funcionario/convites'
 }
 
 export enum NotificationRole {

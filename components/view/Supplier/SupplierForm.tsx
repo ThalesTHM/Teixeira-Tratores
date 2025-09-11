@@ -79,18 +79,37 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    const fetchSupplier = async () => {
-      setLoading(true);
-      const res = await getSupplierBySlug(slug);
-      if (res.success && res.supplier) {
-        setSupplier(res.supplier);
-        setError("");
-      } else {
-        setError(res.error || "Erro ao buscar fornecedor");
+    const eventSource = new EventSource(`/api/entities/fornecedor/${slug}`);
+    setLoading(true);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data) {
+          setSupplier(data);
+          setError("");
+        } else {
+          setError(data.error || "Erro ao buscar fornecedor");
+        }
+        setLoading(false);
+      } catch (e) {
+        console.error('Error processing supplier data:', e);
+        setError("Erro ao processar dados do fornecedor");
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetchSupplier();
+
+    eventSource.onerror = () => {
+      console.error("SSE connection error");
+      setError("Erro na conexão com o servidor");
+      setLoading(false);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [slug]);
 
   if (loading) {

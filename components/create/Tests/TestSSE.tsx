@@ -10,7 +10,7 @@ export default function LiveData() {
   const [data, setData] = useState<DataItem[]>([]);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/stream-test");
+    const eventSource = new EventSource("/api/entities/convite/32ytzkeRD1jTNEJnBeZRd-FX_LUQuRW81fDoDxIWfkA-tHp2MX-H2x8tZ6X_TlG-M-iG9vneSxTz40JgpLCtJqT");
 
     eventSource.onmessage = (event) => {
       const parsed = JSON.parse(event.data);

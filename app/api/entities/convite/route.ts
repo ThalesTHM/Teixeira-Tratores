@@ -16,7 +16,12 @@ export async function GET(req: NextRequest) {
 
   const rolePriority = role === 'admin' ? NotificationRole.ADMIN :
       role === 'manager' ? NotificationRole.MANAGER :
-      NotificationRole.EMPLOYEE
+      NotificationRole.EMPLOYEE;
+
+  if (rolePriority > NotificationRole.MANAGER) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
 
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
@@ -24,30 +29,20 @@ export async function GET(req: NextRequest) {
 
   writer.write(encoder.encode("retry: 3000\n\n"));
 
-  const notificationsRef = await adminFirestore.collection("notifications")
-    .where('role', '>=', rolePriority)
-    .orderBy("role", "desc")
-    .orderBy("createdAt", "desc");
+  const emailInvitesRef = await adminFirestore.collection("emailInvites")
+    .where("used", "==", false);
 
-  const unsubscribe = await notificationsRef.onSnapshot(snapshot => {
-    const notifications = snapshot.docs.map(doc => {
+  const unsubscribe = await emailInvitesRef.onSnapshot(snapshot => {
+    const emailInvites = snapshot.docs.map(doc => {
       const docData = doc.data();
       if (!docData) return null;
-
-      docData.read = docData.readBy?.includes(session.uid) || false;
-      docData.softRead = docData.softReadBy?.includes(session.uid) || false;
-
-      delete docData.readBy;
-      delete docData.softReadBy;
-      delete docData.softReadAt;
-      delete docData.readAt;
 
       return {
         id: doc.id,
         ...docData
       };
     });
-    const payload = `data: ${JSON.stringify(notifications)}\n\n`;
+    const payload = `data: ${JSON.stringify(emailInvites)}\n\n`;
     writer.write(encoder.encode(payload));
   });
 

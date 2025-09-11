@@ -33,7 +33,7 @@ const paymentStatusOptions = [
   { key: 'ATR', value: 'Atrasado' },
 ];
 
-const BillsToRecieveForm: React.FC<BillsToRecieveFormProps> = ({ slug }) => {
+const BillsToRecieveForm = ({ slug }: BillsToRecieveFormProps): React.ReactElement => {
   const [bill, setBill] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -125,31 +125,71 @@ const BillsToRecieveForm: React.FC<BillsToRecieveFormProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    const fetchBillAndProjects = async () => {
-      setLoading(true);
-      // Fetch bill
-      const res = await getBillToReceiveBySlug(slug);
-      if (res.success && res.data && typeof res.data === 'object') {
-        setBill(res.data);
-        setError('');
-        // Fetch project name
-        if ('project' in res.data && typeof res.data.project === 'string' && res.data.project) {
-          const projectRes = await getProjectBySlug(res.data.project);
-          if (projectRes.success && projectRes.project?.name) setProjectName(projectRes.project.name);
+    setLoading(true);
+
+    // Subscribe to bill updates
+    const billEventSource = new EventSource(`/api/entities/conta/conta-a-receber/${slug}`);
+    billEventSource.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data) {
+          setBill(data);
+          setError('');
+          // Fetch project name if bill has a project
+          if (data.project) {
+            const projectRes = await getProjectBySlug(data.project);
+            if (projectRes?.project?.name) {
+              setProjectName(projectRes.project.name);
+            }
+          }
+          setLoading(false); // Only set loading to false after we have the data
+        } else {
+          setError('Erro ao buscar conta a receber');
+          setLoading(false);
         }
-      } else {
-        setError(res.error || 'Erro ao buscar conta a receber');
+      } catch (e) {
+        console.error('Error processing bill data:', e);
+        setError('Erro ao processar dados da conta');
+        setLoading(false);
       }
-      // Fetch projects
-      const projectsRes = await viewProjects();
-      if (projectsRes.success && Array.isArray(projectsRes.projects)) {
-        setProjects(projectsRes.projects.map(p => ({ key: p.slug, value: p.name ?? '' })));
-      } else {
-        setProjects([]);
-      }
-      setLoading(false);
     };
-    fetchBillAndProjects();
+
+    // Subscribe to projects list updates
+    const projectsEventSource = new EventSource('/api/entities/projeto');
+    projectsEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data) {
+          setProjects(data.map((p: { slug: string; name: string }) => ({ 
+            key: p.slug, 
+            value: p.name || '' 
+          })));
+        } else {
+          setProjects([]);
+        }
+      } catch (e) {
+        console.error('Error processing projects data:', e);
+      }
+    };
+
+    // Error handling for both connections
+    billEventSource.onerror = () => {
+      console.error("SSE connection error for bill");
+      setError('Erro na conexão com o servidor');
+      setLoading(false);
+      billEventSource.close();
+    };
+
+    projectsEventSource.onerror = () => {
+      console.error("SSE connection error for projects");
+      projectsEventSource.close();
+    };
+
+    // Cleanup function
+    return () => {
+      billEventSource.close();
+      projectsEventSource.close();
+    };
   }, [slug]);
 
   if (loading) {
@@ -160,10 +200,10 @@ const BillsToRecieveForm: React.FC<BillsToRecieveFormProps> = ({ slug }) => {
     );
   }
 
-  if (error || !bill) {
+  if (error) {
     return (
       <div className="flex justify-center items-center h-full w-full mt-10">
-        <p className="forms-error">{error || 'Conta a receber não encontrada.'}</p>
+        <p className="forms-error">{error}</p>
       </div>
     );
   }

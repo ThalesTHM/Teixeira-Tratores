@@ -128,32 +128,71 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    const fetchBillAndSuppliers = async () => {
-      setLoading(true);
-      // Fetch bill
-      const res = await getBillsToPayBySlug(slug);
-      if (res.success && res.bill) {
-        setBill(res.bill);
-        setError('');
-        // Fetch supplier name
-        if (res.bill.supplier) {
-          const supplierRes = await getSupplierById(res.bill.supplier);
-          if (supplierRes.success && supplierRes.supplier?.name) setSupplierName(supplierRes.supplier.name);
-          console.log(supplierRes);
+    setLoading(true);
+
+    // Subscribe to bill updates
+    const billEventSource = new EventSource(`/api/entities/conta/conta-a-pagar/${slug}`);
+    billEventSource.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data) {
+          setBill(data);
+          setError('');
+          // Fetch supplier name if bill has a supplier
+          if (data.supplier) {
+            const supplierRes = await getSupplierById(data.supplier);
+            if (supplierRes?.supplier?.name) {
+              setSupplierName(supplierRes.supplier.name);
+            }
+          }
+          setLoading(false); // Only set loading to false after we have the data
+        } else {
+          setError('Erro Ao Buscar Conta A Pagar');
+          setLoading(false);
         }
-      } else {
-        setError(res.error || 'Erro Ao Buscar Conta A Pagar');
+      } catch (e) {
+        console.error('Error processing bill data:', e);
+        setError('Erro ao processar dados da conta');
+        setLoading(false);
       }
-      // Fetch suppliers
-      const suppliersRes = await viewSuppliers();
-      if (suppliersRes.success && Array.isArray(suppliersRes.suppliers)) {
-        setSuppliers(suppliersRes.suppliers.map(s => ({ key: s.id, value: s.name })));
-      } else {
-        setSuppliers([]);
-      }
-      setLoading(false);
     };
-    fetchBillAndSuppliers();
+
+    // Subscribe to suppliers list updates
+    const suppliersEventSource = new EventSource('/api/entities/fornecedor');
+    suppliersEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data) {
+          setSuppliers(data.map((s: { id: string; name: string }) => ({ 
+            key: s.id, 
+            value: s.name 
+          })));
+        } else {
+          setSuppliers([]);
+        }
+      } catch (e) {
+        console.error('Error processing suppliers data:', e);
+      }
+    };
+
+    // Error handling for both connections
+    billEventSource.onerror = () => {
+      console.error("SSE connection error for bill");
+      setError('Erro na conexão com o servidor');
+      setLoading(false);
+      billEventSource.close();
+    };
+
+    suppliersEventSource.onerror = () => {
+      console.error("SSE connection error for suppliers");
+      suppliersEventSource.close();
+    };
+
+    // Cleanup function
+    return () => {
+      billEventSource.close();
+      suppliersEventSource.close();
+    };
   }, [slug]);
 
   if (loading) {
@@ -164,10 +203,10 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
     );
   }
 
-  if (error || !bill) {
+  if (error) {
     return (
       <div className="flex justify-center items-center h-full w-full mt-10">
-        <p className="forms-error">{error || 'Conta A Pagar Não Encontrada.'}</p>
+        <p className="forms-error">{error}</p>
       </div>
     );
   }

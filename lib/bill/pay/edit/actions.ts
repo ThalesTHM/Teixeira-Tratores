@@ -21,14 +21,21 @@ export const editBillToPay = async (slug: string, data: any) => {
       .where('slug', '==', slug)
       .get();
 
-    if (!billDoc.empty) {
-      return { success: false, error: 'A bill with the same data already exists' };
+    if (billDoc.empty) {     
+      return { success: false, error: 'Bill not found' };
     }
 
     const doc = billDoc.docs[0].data();
 
-    if (JSON.stringify(doc) === JSON.stringify(data)) {
-      return { success: false, error: "Bill not edited." };
+    if (doc.name === data.name &&
+      doc.price === data.price &&
+      doc.expireDate === data.expireDate &&
+      doc.paymentMethod === data.paymentMethod &&
+      doc.paymentStatus === data.paymentStatus &&
+      doc.supplier === data.supplier &&
+      doc.description === data.description
+    ) {
+      return { success: false, error: 'A bill with the same data already exists' };
     }
   } catch (error) {
     return { success: false, error: 'Error checking existing bill data' };

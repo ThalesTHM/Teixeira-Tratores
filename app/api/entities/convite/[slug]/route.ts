@@ -5,7 +5,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { NotificationRole } from "@/services/notifications/notifications-service";
 import { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, {params}: { params: { slug: string } }) {
   const session = await getUserFromSession();
 
   if (!session) {
@@ -16,7 +16,11 @@ export async function GET(req: NextRequest) {
 
   const rolePriority = role === 'admin' ? NotificationRole.ADMIN :
       role === 'manager' ? NotificationRole.MANAGER :
-      NotificationRole.EMPLOYEE
+      NotificationRole.EMPLOYEE;
+
+  if (rolePriority > NotificationRole.MANAGER) {
+    return new Response("Forbidden", { status: 403 });
+  }
 
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
@@ -24,30 +28,26 @@ export async function GET(req: NextRequest) {
 
   writer.write(encoder.encode("retry: 3000\n\n"));
 
-  const notificationsRef = await adminFirestore.collection("notifications")
-    .where('role', '>=', rolePriority)
-    .orderBy("role", "desc")
-    .orderBy("createdAt", "desc");
+  const slug = (await params).slug;
 
-  const unsubscribe = await notificationsRef.onSnapshot(snapshot => {
-    const notifications = snapshot.docs.map(doc => {
-      const docData = doc.data();
-      if (!docData) return null;
+  const emailInvitesRef = await adminFirestore.collection("emailInvites");
+  const snapshot = await emailInvitesRef.where("slug", "==", slug);
 
-      docData.read = docData.readBy?.includes(session.uid) || false;
-      docData.softRead = docData.softReadBy?.includes(session.uid) || false;
-
-      delete docData.readBy;
-      delete docData.softReadBy;
-      delete docData.softReadAt;
-      delete docData.readAt;
-
-      return {
+  const unsubscribe = await snapshot.onSnapshot(snapshot => {
+    if(snapshot.empty){
+      writer.write(`data: ${null}\n\n`);
+    }
+    const doc = snapshot.docs[0]
+    
+    const client = doc.exists ? 
+      {
         id: doc.id,
-        ...docData
-      };
-    });
-    const payload = `data: ${JSON.stringify(notifications)}\n\n`;
+        ...doc.data()
+      }
+    :
+      null;
+    
+    const payload = `data: ${JSON.stringify(client)}\n\n`;
     writer.write(encoder.encode(payload));
   });
 

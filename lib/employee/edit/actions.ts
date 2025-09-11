@@ -67,9 +67,9 @@ export const editEmployee = async (slug: string, data: any) => {
     return { success: false, error: "Error checking existing email" };
   }
 
-  if(session.email !== data.email) {
+  if(originalEmployee.email !== data.email) {
     try {
-      adminAuth.updateUser(session?.uid as string, {
+      await adminAuth.updateUser(session?.uid as string, {
         email: data.email,
       });
     } catch (error) {
@@ -108,10 +108,11 @@ export const editEmployee = async (slug: string, data: any) => {
   }
 
   // Notification
-  const name = data.name || "Funcionário";
+  const name = originalEmployee.name || "Funcionário";
   const notification = {
     message: `Funcionário "${name}" foi editado.`,
     role: NotificationRole.MANAGER,
+    slug: originalEmployee.slug,
     createdBy: session.name,
     priority: NotificationPriority.LOW,
     notificationSource: NotificationSource.EMPLOYEE
