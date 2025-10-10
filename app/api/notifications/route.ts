@@ -24,12 +24,12 @@ export async function GET(req: NextRequest) {
 
   writer.write(encoder.encode("retry: 3000\n\n"));
 
-  const notificationsRef = adminFirestore.collection("notifications")
+  const notificationsRef = await adminFirestore.collection("notifications")
     .where('role', '>=', rolePriority)
     .orderBy("role", "desc")
     .orderBy("createdAt", "desc");
 
-  const unsubscribe = notificationsRef.onSnapshot(snapshot => {
+  const unsubscribe = await notificationsRef.onSnapshot(snapshot => {
     const notifications = snapshot.docs.map(doc => {
       const docData = doc.data();
       if (!docData) return null;

@@ -5,6 +5,7 @@ import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { nanoid } from "nanoid";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 export const createBillToPay = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -51,6 +52,24 @@ export const createBillToPay = async (formData: FormData) => {
             success: false,
             error:  "Error Creating Bill To Pay"
         }
+    }
+
+    const notification = {
+        message: `Conta a Pagar "${billData.name}" Foi Criada.`,
+        role: NotificationRole.MANAGER,
+        slug: slug,
+        createdBy: session.name,
+        notificationSource: NotificationSource.BILL_TO_PAY
+    }
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+        console.error("Error creating notification:", notificationRes.error);
+        return {
+            success: false,
+            error: "Error creating notification"
+        };
     }
 
     return {

@@ -4,6 +4,7 @@ import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 export const editClient = async (slug: string, data: any) => {
   const session = await getUserFromSession();
@@ -42,6 +43,7 @@ export const editClient = async (slug: string, data: any) => {
     }
 
     const doc = querySnapshot.docs[0];
+    const clientData = doc.data();
 
     await doc.ref.update({
       name: data.name,
@@ -50,6 +52,20 @@ export const editClient = async (slug: string, data: any) => {
       pnumber: data.pnumber
     });
 
+    // Notification
+    const name = clientData.name || "Cliente";
+    const notification = {
+      message: `Cliente "${name}" foi editado.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      slug: clientData.slug,
+      priority: NotificationPriority.LOW,
+      notificationSource: NotificationSource.CLIENT
+    };
+    const notificationRes = await NotificationsService.createNotification(notification);
+    if (!notificationRes.success) {
+      return { success: false, error: 'Error creating notification' };
+    }
     return { success: true, error: '' };
   } catch (error) {
     return { success: false, error: 'Error editing the client.' };

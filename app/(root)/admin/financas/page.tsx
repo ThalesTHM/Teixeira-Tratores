@@ -1,12 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { viewBillsToPay } from '@/lib/bill/pay/view/actions';
-import { viewBillsToReceive } from '@/lib/bill/recieve/view/actions';
-import { viewClients } from '@/lib/client/view/actions';
-import { viewProjects } from '@/lib/project/view/actions';
-import { viewSuppliers } from '@/lib/supplier/view/actions';
-import { viewEmployees } from '@/lib/employee/view/actions';
 import { FinancePieChart, EntityPieChart } from '@/components/utils/FinanceCharts';
 
 
@@ -26,45 +20,41 @@ const Finances = () => {
   });
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const es = new EventSource('/api/entities/finance/summary');
+    
+    es.onmessage = (event) => {
       try {
-        const [payRes, receiveRes, clientsRes, projectsRes, suppliersRes, employeesRes] = await Promise.all([
-          viewBillsToPay(),
-          viewBillsToReceive(),
-          viewClients(),
-          viewProjects(),
-          viewSuppliers(),
-          viewEmployees(),
-        ]);
-        const billsToPayArr = payRes.success && Array.isArray(payRes.bills) ? payRes.bills : [];
-        const billsToReceiveArr = receiveRes.success && Array.isArray(receiveRes.bills) ? receiveRes.bills : [];
-        const totalPay = billsToPayArr.reduce((sum, bill) => {
-          const price = typeof (bill as any).price === 'number' ? (bill as any).price : 0;
-          return sum + price;
-        }, 0);
-        const totalReceive = billsToReceiveArr.reduce((sum, bill) => {
-          const price = typeof (bill as any).price === 'number' ? (bill as any).price : 0;
-          return sum + price;
-        }, 0);
-        const grossProfit = totalReceive - totalPay;
-        setStats({
-          billsToPay: billsToPayArr.length,
-          billsToReceive: billsToReceiveArr.length,
-          clients: clientsRes.success && Array.isArray(clientsRes.clients) ? clientsRes.clients.length : 0,
-          projects: projectsRes.success && Array.isArray(projectsRes.projects) ? projectsRes.projects.length : 0,
-          suppliers: suppliersRes.success && Array.isArray(suppliersRes.suppliers) ? suppliersRes.suppliers.length : 0,
-          employees: employeesRes.success && Array.isArray(employeesRes.employees) ? employeesRes.employees.length : 0,
-          totalPay,
-          totalReceive,
-          grossProfit,
-          loading: false,
-          error: '',
-        });
+        const data = JSON.parse(event.data);
+        if (data) {
+          setStats({
+            billsToPay: data.billsToPay || 0,
+            billsToReceive: data.billsToReceive || 0,
+            clients: data.clients || 0,
+            projects: data.projects || 0,
+            suppliers: data.suppliers || 0,
+            employees: data.employees || 0,
+            totalPay: data.totalPay || 0,
+            totalReceive: data.totalReceive || 0,
+            grossProfit: (data.totalReceive || 0) - (data.totalPay || 0),
+            loading: false,
+            error: '',
+          });
+        }
       } catch (e) {
-        setStats((s) => ({ ...s, loading: false, error: 'Error loading finance dashboard.' }));
+        console.error('Error processing finance data:', e);
+        setStats(prev => ({ ...prev, loading: false, error: 'Error loading finance dashboard.' }));
       }
     };
-    fetchStats();
+
+    es.onerror = () => {
+      console.error("SSE connection error");
+      setStats(prev => ({ ...prev, loading: false, error: 'Error connecting to server.' }));
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
   }, []);
 
   if (stats.loading) {

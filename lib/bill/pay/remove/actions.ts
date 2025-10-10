@@ -2,6 +2,7 @@
 
 import { getUserFromSession } from '@/lib/auth';
 import { adminFirestore } from '@/firebase/firebase-admin';
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/notifications-service';
 
 export const removeBillToPay = async (slug: string) => {
   const session = await getUserFromSession();
@@ -10,16 +11,39 @@ export const removeBillToPay = async (slug: string) => {
     return { success: false, error: 'User not authenticated' };
   }
 
+  let billDoc;
+
   try {
     const billsCollection = adminFirestore.collection('billsToPay');
-    const billSnapshot = await billsCollection.where('slug', '==', slug).limit(1).get();
-
-    if (billSnapshot.empty) {
+    billDoc = await billsCollection
+      .where('slug', '==', slug)
+      .get();
+      
+    if (billDoc.empty) {
       return { success: false, error: 'Bill not found' };
     }
 
-    const billDoc = billSnapshot.docs[0];
-    await billDoc.ref.delete();
+    const doc = billDoc.docs[0];
+    await doc.ref.delete();
+
+    const name = doc.data().name || 'Conta a Pagar';
+
+    const notification = {
+      message: `Conta a Receber "${name}" Foi Excluída.`,
+      role: NotificationRole.MANAGER,
+      createdBy: session.name,
+      priority: NotificationPriority.MEDIUM,
+      notificationSource: NotificationSource.BILL_TO_RECEIVE
+    };
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+    
+    if (!notificationRes.success) {
+      return {
+        success: false,
+        error: "Erro ao criar notificação.",
+      };
+    }
 
     return { success: true, error: '' };
   } catch (error) {

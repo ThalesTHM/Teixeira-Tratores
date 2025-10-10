@@ -1,4 +1,5 @@
 "use server";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
@@ -66,9 +67,9 @@ export const editEmployee = async (slug: string, data: any) => {
     return { success: false, error: "Error checking existing email" };
   }
 
-  if(session.email !== data.email) {
+  if(originalEmployee.email !== data.email) {
     try {
-      adminAuth.updateUser(session?.uid as string, {
+      await adminAuth.updateUser(session?.uid as string, {
         email: data.email,
       });
     } catch (error) {
@@ -106,5 +107,19 @@ export const editEmployee = async (slug: string, data: any) => {
     return { success: false, error: "Error Editing Employee" };
   }
 
+  // Notification
+  const name = originalEmployee.name || "Funcionário";
+  const notification = {
+    message: `Funcionário "${name}" foi editado.`,
+    role: NotificationRole.MANAGER,
+    slug: originalEmployee.slug,
+    createdBy: session.name,
+    priority: NotificationPriority.LOW,
+    notificationSource: NotificationSource.EMPLOYEE
+  };
+  const notificationRes = await NotificationsService.createNotification(notification);
+  if (!notificationRes.success) {
+    return { success: false, error: 'Error creating notification' };
+  }
   return { success: true, error: ""};
 };

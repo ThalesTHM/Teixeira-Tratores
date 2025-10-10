@@ -56,7 +56,7 @@ export const createProject = async (formData: FormData) => {
         const projectsCollection = adminFirestore.collection('projects');
         await projectsCollection.add({
             name: projectData.name,
-            value: projectData.expectedBudget,
+            expectedBudget: projectData.expectedBudget,
             deadline: projectData.deadline,
             description: projectData.description,
             client: projectData.client,
@@ -72,7 +72,7 @@ export const createProject = async (formData: FormData) => {
 
     const notification = {
         message: `Projeto "${projectData.name}" Foi Criado.`,
-        role: NotificationRole.ADMIN,
+        role: NotificationRole.MANAGER,
         slug,
         createdBy: session.name,
         notificationSource: NotificationSource.PROJECT

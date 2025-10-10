@@ -5,6 +5,7 @@ import { clientFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { customAlphabet } from "nanoid";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 
@@ -43,6 +44,8 @@ export const createClient = async (formData: FormData) => {
         }
     }
 
+    const slug = generateSlug();
+
     try {
         const clientsCollection = adminFirestore.collection('clients');
         await clientsCollection.add({
@@ -50,7 +53,7 @@ export const createClient = async (formData: FormData) => {
             cpf: clientData.cpf,
             address: clientData.address,
             pnumber: clientData.pnumber,
-            slug: generateSlug(),
+            slug: slug,
             createdAt: Date.now(),
         });
     } catch (error) {
@@ -58,6 +61,24 @@ export const createClient = async (formData: FormData) => {
             success: false,
             error:  "Error Creating Client"
         }
+    }
+
+    const notification = {
+        message: `Cliente "${clientData.name}" Foi Criado.`,
+        role: NotificationRole.MANAGER,
+        createdBy: session.name,
+        slug: slug,
+        notificationSource: NotificationSource.CLIENT
+    }
+    
+    const notificationRes = await NotificationsService.createNotification(notification);
+
+    if (!notificationRes.success) {
+        console.error("Error creating notification:", notificationRes.error);
+        return {
+            success: false,
+            error: "Error creating notification"
+        };
     }
 
     return {

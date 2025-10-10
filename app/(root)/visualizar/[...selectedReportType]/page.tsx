@@ -1,47 +1,58 @@
-import React from 'react'
-import ClientList from '@/components/list/client/clientList'
-import SupplierList from '@/components/list/supplier/supplierList'
-import ProjectList from '@/components/list/project/projectList'
-import EmployeeList from '@/components/list/employee/employeeList'
-import BillsToPayList from '@/components/list/bill/pay/billsToPayList'
-import BillsToRecieveList from '@/components/list/bill/recieve/billsToRecieveList'
+"use client"
 
-const SelectReportItem = async ({ params }: { params: Promise<{ selectedReportType: Array<string> }> }) => {
-  const { selectedReportType } = await params
+import React, { use, useEffect, useState } from 'react'
+import GenericList from '@/components/list/genericList'
 
-  let listComponent
+const SelectReportItem = ({ params }: { params: Promise<{ selectedReportType: string[] }> }) => {
+  const { selectedReportType } = use(params);
+  const [items, setItems] = useState<any>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const [unknownForm, setUnknownForm] = useState<string | undefined>();
 
-  switch (selectedReportType[0]) {
-    case 'cliente':
-      listComponent = <ClientList />
-      break
-    case 'fornecedor':
-      listComponent = <SupplierList />
-      break
-    case 'projeto':
-      listComponent = <ProjectList />
-      break
-    case 'funcionario':
-      listComponent = <EmployeeList />
-      break
-    case 'conta':
-      if (selectedReportType[1] === 'conta-a-pagar') {
-        listComponent = <BillsToPayList />
-        break;
-      } else if (selectedReportType[1] === 'conta-a-receber') {
-        listComponent = <BillsToRecieveList />
-        break;
-      } else {
-        listComponent = <div>Tipo de conta desconhecido.</div>
-        break;
-      }
-    default:
-      listComponent = <div>Tipo de relatório desconhecido.</div>
-  }
+  useEffect(() => {
+    setLoading(true);
+
+    const eventSource = new EventSource("/api/entities/" + selectedReportType[0] + (selectedReportType[1] ? "/" + selectedReportType[1] : "") + "/");
+
+    eventSource.onmessage = (event) => {
+      const parsed = JSON.parse(event.data);
+      setItems(parsed);
+      setLoading(false)
+    };
+
+    eventSource.onerror = (event) => {
+      console.log("SSE error:", event);
+      setError("SSE error");
+      eventSource.close();
+    };
+
+    const handleBeforeUnload = () => {
+      console.log("Fechando essa porra aqui");
+      eventSource.close();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      eventSource.close();
+    };
+
+  }, [])
 
   return (
     <div className="w-full flex flex-col items-center justify-center mt-8">
-      {listComponent}
+      {!unknownForm ? (
+        <GenericList 
+        listTitle={selectedReportType[0] + (selectedReportType[1] ? "/" + selectedReportType[1] : "")}
+        items={items}
+        loading={loading}
+        error={error}
+      />
+      ) : (
+        <div>{unknownForm}</div>
+      )}
     </div>
   )
 }

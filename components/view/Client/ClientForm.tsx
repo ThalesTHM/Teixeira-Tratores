@@ -87,18 +87,32 @@ const ClientForm: React.FC<ClientFormProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    const fetchClient = async () => {
-      setLoading(true);
-      const res = await getClientBySlug(slug);
-      if (res.success && res.client) {
-        setClient(res.client);
-        setError("");
-      } else {
-        setError(res.error || "Erro ao buscar cliente");
-      }
-      setLoading(false);
+    const eventSource = new EventSource("/api/entities/cliente/" + slug);
+
+    eventSource.onmessage = (event) => {
+      const parsed = JSON.parse(event.data);
+      setClient(parsed);
+      setLoading(false)
     };
-    fetchClient();
+
+    eventSource.onerror = (event) => {
+      console.log("SSE error:", event);
+      setError("SSE error");
+      eventSource.close();
+    };
+
+    const handleBeforeUnload = () => {
+      console.log("Fechando essa porra aqui");
+      eventSource.close();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      eventSource.close();
+    };
+    
   }, [slug]);
 
   if (loading) {

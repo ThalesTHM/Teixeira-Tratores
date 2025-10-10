@@ -94,19 +94,47 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    const fetchEmployee = async () => {
-      setLoading(true);
-      const res = await getEmployeeBySlug(slug);
-      if (res.success && res.employee) {
-        setEmployee(res.employee);
-        console.log("Fetched Employee:", res.employee);
-        setError("");
-      } else {
-        setError(res.error || "Erro Ao Buscar Funcionário");
+    setLoading(true);
+
+    const employeeEventSource = new EventSource(`/api/entities/funcionario/${slug}`);
+
+    employeeEventSource.onmessage = async (event: MessageEvent) => {
+      if (!event.data || event.data === 'null') {
+        setEmployee(null);
+        setError('Funcionário não encontrado.');
+        setLoading(false);
+        return;
       }
+
+      try {
+        const data = JSON.parse(event.data);
+        setEmployee({
+          name: data.name || "",
+          email: data.email || "",
+          role: data.role || "",
+          pnumber: data.pnumber || "",
+          cpf: data.cpf || "",
+          address: data.address || "",
+          createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
+        });
+        setError("");
+        setLoading(false);
+      } catch (e) {
+        console.error('Error processing employee data:', e);
+        setError("Erro ao processar dados do funcionário");
+        setEmployee(null);
+        setLoading(false);
+      }
+    };
+
+    employeeEventSource.onerror = () => {
+      setError("Erro na conexão com dados do funcionário");
       setLoading(false);
     };
-    fetchEmployee();
+
+    return () => {
+      employeeEventSource.close();
+    };
   }, [slug]);
 
   if (loading) {

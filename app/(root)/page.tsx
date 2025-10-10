@@ -40,27 +40,36 @@ const Page = () => {
   });
 
   useEffect(() => {
-    async function fetchCounts() {
-      // TODO: Replace these with real fetches from your backend or Firestore
-      const [projetos, clientes, fornecedores, funcionarios, contasPagar, contasReceber] = await Promise.all([
-        fetchProjetosCount(),
-        fetchClientesCount(),
-        fetchFornecedoresCount(),
-        fetchFuncionariosCount(),
-        fetchContasPagarCount(),
-        fetchContasReceberCount()
-      ]);
-      setCounts({
-        projetos,
-        clientes,
-        fornecedores,
-        funcionarios,
-        contasPagar,
-        contasReceber,
-        loading: false
-      });
-    }
-    fetchCounts();
+    const eventSource = new EventSource('/api/entities/counts');
+    let receivedCounts = 0;
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setCounts(prev => {
+          const newCounts = { ...prev, ...data };
+          
+          // Only set loading to false after we've received at least one count for each type
+          receivedCounts++;
+          if (receivedCounts >= 6) {
+            newCounts.loading = false;
+          }
+          
+          return newCounts;
+        });
+      } catch (e) {
+        console.error('Error processing counts data:', e);
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.error("SSE connection error");
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   return (
@@ -83,33 +92,6 @@ const Page = () => {
       </div>
     </div>
   );
-}
-
-
-// Real async functions for fetching counts
-async function fetchProjetosCount() {
-  const res = await viewProjects();
-  return res.success && res.projects ? res.projects.length : 0;
-}
-async function fetchClientesCount() {
-  const res = await viewClients();
-  return res.success && res.clients ? res.clients.length : 0;
-}
-async function fetchFornecedoresCount() {
-  const res = await viewSuppliers();
-  return res.success && res.suppliers ? res.suppliers.length : 0;
-}
-async function fetchFuncionariosCount() {
-  const res = await viewEmployees();
-  return res.success && res.employees ? res.employees.length : 0;
-}
-async function fetchContasPagarCount() {
-  const res = await viewBillsToPay();
-  return res.success && res.bills ? res.bills.length : 0;
-}
-async function fetchContasReceberCount() {
-  const res = await viewBillsToReceive();
-  return res.success && res.bills ? res.bills.length : 0;
 }
 
 export default Page;
