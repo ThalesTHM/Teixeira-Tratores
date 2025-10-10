@@ -17,6 +17,8 @@ export const createBillToRecieve = async (formData: FormData) => {
         }
     }
 
+    const slug = [nanoid(10), nanoid(10), nanoid(10), nanoid(10), nanoid(10)].join('-');
+
     const billData = {
         name: formData.get('name'),
         price: Number(formData.get('price')),
@@ -25,7 +27,7 @@ export const createBillToRecieve = async (formData: FormData) => {
         paymentStatus: formData.get('paymentStatus'),
         description: formData.get('description'),
         project: formData.get('project'),
-        slug: `${nanoid(10)}-${nanoid(10)}-${nanoid(10)}-${nanoid(10)}-${nanoid(10)}`
+        slug: slug,
     }
 
     try{
@@ -56,6 +58,7 @@ export const createBillToRecieve = async (formData: FormData) => {
     const notification = {
         message: `Conta a Receber "${billData.name}" Foi Criada.`,
         role: NotificationRole.MANAGER,
+        slug: slug,
         createdBy: session.name,
         notificationSource: NotificationSource.BILL_TO_RECEIVE
     }

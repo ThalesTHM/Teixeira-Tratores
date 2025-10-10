@@ -1,11 +1,9 @@
 "use server";
 
 import { adminAuth, adminFirestore } from '@/firebase/firebase-admin';
-import { create } from 'domain';
 import { cookies } from 'next/headers';
 import { passwordRecoverySchema, signupFormSchema } from './auth-validation';
 import { z } from 'zod';
-import { sign } from 'crypto';
 import { NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/notifications-service';
 
 const getAllowedPasswordRecovery = async (email: string) => {
@@ -379,7 +377,7 @@ export const createUser = async ({ email, password }: { email: string, password:
 export const createSession = async ({ idToken }: { idToken: string }) => {
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   
-  try{
+  try {
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
     const cookie = await cookies();
@@ -400,7 +398,7 @@ export const createSession = async ({ idToken }: { idToken: string }) => {
 }
 
 export const logout = async (formData: FormData) : Promise<void> => {
-  const cookie = await cookies()
+  const cookie = await cookies();
   
   cookie.delete({
     name: 'session',

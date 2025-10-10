@@ -75,6 +75,7 @@ export const editBillToPay = async (slug: string, data: any) => {
     const notification = {
       message: `Conta a Pagar "${name}" Foi Editada.`,
       role: NotificationRole.MANAGER,
+      slug: slug,
       createdBy: session.name,
       priority: NotificationPriority.LOW,
       notificationSource: NotificationSource.BILL_TO_PAY

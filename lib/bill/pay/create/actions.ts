@@ -57,6 +57,7 @@ export const createBillToPay = async (formData: FormData) => {
     const notification = {
         message: `Conta a Pagar "${billData.name}" Foi Criada.`,
         role: NotificationRole.MANAGER,
+        slug: slug,
         createdBy: session.name,
         notificationSource: NotificationSource.BILL_TO_PAY
     }

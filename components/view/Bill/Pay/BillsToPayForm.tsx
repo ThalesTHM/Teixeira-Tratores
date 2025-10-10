@@ -224,7 +224,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.name}
                 />
                 {errors.name && errors.name.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
                 <input
                   className="forms-input text-sm text-gray-500 mb-2"
@@ -233,7 +233,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.price}
                 />
                 {errors.price && errors.price.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
                 <input
                   className="forms-input mb-2"
@@ -242,7 +242,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.expireDate ? new Date(bill.expireDate).toISOString().split('T')[0] : ''}
                 />
                 {errors.expireDate && errors.expireDate.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
                 <SelectInput
                   name="paymentMethod"
@@ -252,7 +252,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.paymentMethod}
                 />
                 {errors.paymentMethod && errors.paymentMethod.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
                 <SelectInput
                   name="paymentStatus"
@@ -262,7 +262,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.paymentStatus}
                 />
                 {errors.paymentStatus && errors.paymentStatus.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
                 <SelectInput
                   name="supplier"
@@ -272,7 +272,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.supplier ?? ''}
                 />
                 {errors.supplier && errors.supplier.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
               </>
             ) : (
@@ -294,7 +294,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                       ? supplierName
                         ? supplierName
                         : 'Fornecedor Desconhecido'
-                      : <p>Não Há</p>
+                      : 'Não Há'
                   }</p>
                 </div>
               </div>
@@ -310,7 +310,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
                   defaultValue={bill.description || ''}
                 />
                 {errors.description && errors.description.map((error, i) => (
-                  <div key={i}><p className="forms-error">{error}</p></div>
+                  <span key={i} className="forms-error block">{error}</span>
                 ))}
               </>
             ) : (
