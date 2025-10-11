@@ -19,7 +19,8 @@ export enum NotificationSource {
     CLIENT = 'cliente',
     PROJECT = 'projeto',
     EMPLOYEE = 'funcionario',
-    EMAIL_INVITE = 'funcionario/convites'
+    EMAIL_INVITE = 'funcionario/convites',
+    EMPLOYEE_HOUR = 'funcionario-horas',
 }
 
 export enum NotificationRole {

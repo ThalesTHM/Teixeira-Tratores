@@ -5,7 +5,7 @@ import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
 import { nanoid } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 import { checkIfEmailIsAlreadyInUse, removeUsedInvite } from "../utils";
 
 function generateSlug() {

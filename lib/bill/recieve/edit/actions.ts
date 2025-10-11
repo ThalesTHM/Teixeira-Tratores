@@ -3,7 +3,7 @@
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 import { getUserFromSession } from "@/lib/auth";
 
 export const editBillToReceive = async (slug: string, formData: any) => {

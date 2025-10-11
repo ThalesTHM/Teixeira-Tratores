@@ -5,7 +5,7 @@ import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { nanoid } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const createBillToPay = async (formData: FormData) => {
     const session = await getUserFromSession();

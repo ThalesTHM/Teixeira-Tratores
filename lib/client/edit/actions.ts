@@ -4,7 +4,7 @@ import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const editClient = async (slug: string, data: any) => {
   const session = await getUserFromSession();

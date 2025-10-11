@@ -4,7 +4,7 @@ import { adminAuth, adminFirestore } from '@/firebase/firebase-admin';
 import { cookies } from 'next/headers';
 import { passwordRecoverySchema, signupFormSchema } from './auth-validation';
 import { z } from 'zod';
-import { NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/notifications-service';
+import { NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/NotificationsService';
 
 const getAllowedPasswordRecovery = async (email: string) => {
   const passwordRecoveryAllowedCollection = adminFirestore.collection('passwordRecoveryAllowed');

@@ -4,7 +4,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const editBillToPay = async (slug: string, data: any) => {
   const session = await getUserFromSession();

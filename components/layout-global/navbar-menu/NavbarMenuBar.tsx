@@ -44,6 +44,12 @@ const NavbarMenuBar = (props: { menuTitle: string }) => {
             <MenubarItem>{menuTitle == "visualizar" ? "Funcionários" : "Funcionário"}</MenubarItem>
           </Link>
 
+          <MenubarSeparator />
+
+          <Link href={`/${menuTitle}/funcionario-horas`}>
+            <MenubarItem>{menuTitle == "visualizar" ? "Horas de Funcionários" : "Horas de Funcionário"}</MenubarItem>
+          </Link>
+
           { menuTitle == "visualizar" && (
             <>
               <MenubarSeparator />

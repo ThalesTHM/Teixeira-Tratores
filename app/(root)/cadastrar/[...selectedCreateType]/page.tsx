@@ -2,6 +2,7 @@ import BillsToPayForm from '@/components/create/Bill/Pay/BillsToPayForm';
 import BillsToReceive from '@/components/create/Bill/Receive/BillsToReceiveForm';
 import ClientForm from '@/components/create/Client/ClientForm';
 import EmployeeForm from '@/components/create/Employee/EmployeeForm';
+import EmployeeHourForm from '@/components/create/Employee-Hour/EmployeeHourForm';
 import EquipmentCostForm from '@/components/create/Equipment/Cost/EquipmentCostForm';
 import EquipmentForm from '@/components/create/Equipment/EquipmentForm';
 import MachineryCostForm from '@/components/create/Machinery/Cost/MachineryCostForm';
@@ -29,6 +30,9 @@ const page = async ({ params }: { params: Promise<{ selectedCreateType: Array<st
       break;
     case 'funcionario':
       formComponent = <EmployeeForm />;
+      break;
+    case 'funcionario-horas':
+      formComponent = <EmployeeHourForm />;
       break;
     case 'conta':
       switch (selectedCreateType[1]) {

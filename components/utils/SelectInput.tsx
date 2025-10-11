@@ -25,13 +25,23 @@ export const SelectInput = (
         value={value} onValueChange={setValue}
       >
         <SelectTrigger className="forms-input">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue 
+            placeholder={placeholder} 
+            className="truncate overflow-hidden text-ellipsis whitespace-nowrap max-w-full" 
+          />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectLabel>{selectLabel}</SelectLabel>
             {items.map((item, index)=> (
-              <SelectItem key={index} value={item.key}>{item.value}</SelectItem>
+              <SelectItem key={index} value={item.key} className="max-w-full">
+                <span 
+                  className="truncate overflow-hidden text-ellipsis whitespace-nowrap block max-w-[200px]" 
+                  title={item.value}
+                >
+                  {item.value}
+                </span>
+              </SelectItem>
             ))}
           </SelectGroup>
         </SelectContent>

@@ -2,7 +2,7 @@
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const removeBillToReceive = async (slug: string) => {
   const session = await getUserFromSession();

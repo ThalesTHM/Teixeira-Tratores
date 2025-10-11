@@ -5,7 +5,7 @@ import { z } from "zod";
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { projectFormSchema } from "./validation";
 import { customAlphabet } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 

@@ -2,7 +2,7 @@
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
-import { NotificationRole } from "@/services/notifications/notifications-service";
+import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest, {params}: { params: { slug: string } }) {

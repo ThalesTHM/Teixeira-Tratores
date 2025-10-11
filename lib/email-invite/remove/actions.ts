@@ -1,5 +1,5 @@
 "use server";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
