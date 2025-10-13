@@ -27,8 +27,6 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
   const emailInvitesRef = await adminFirestore.collection("emailInvites")
     .where("used", "==", false);
 

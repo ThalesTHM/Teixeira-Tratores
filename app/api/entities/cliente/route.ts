@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ClientsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
@@ -15,22 +15,15 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
+  const clientsRepository = new ClientsRepository();
 
-  const clientsRef = await adminFirestore.collection("clients");
-
-  const unsubscribe = await clientsRef.onSnapshot(snapshot => {
-    const clients = snapshot.docs.map(doc => {
-      const docData = doc.data();
-      if (!docData) return null;
-
-      return {
-        id: doc.id,
-        ...docData
-      };
-    });
-    const payload = `data: ${JSON.stringify(clients)}\n\n`;
-    writer.write(encoder.encode(payload));
+  const unsubscribe = clientsRepository.subscribeToAll((clients) => {
+    try {
+      const payload = `data: ${JSON.stringify(clients)}\n\n`;
+      writer.write(encoder.encode(payload));
+    } catch (error) {
+      console.error('Error sending clients data:', error);
+    }
   });
 
   req.signal.addEventListener("abort", () => {

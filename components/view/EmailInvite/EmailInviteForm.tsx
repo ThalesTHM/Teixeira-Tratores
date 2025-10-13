@@ -20,7 +20,7 @@ interface EmailInvite {
   cpf: string;
   address: string;
   used: boolean;
-  createdAt: number;
+  createdAt: Date;
   slug: string;
 }
 
@@ -120,7 +120,7 @@ const EmailInviteForm: React.FC<InviteFormProps> = ({ slug }) => {
           cpf: data.cpf || "",
           address: data.address || "",
           used: data.used || false,
-          createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
+          createdAt: typeof data.createdAt === "object" ? data.createdAt : new Date(),
           slug: data.slug || "",
         });
         setError("");
@@ -295,7 +295,7 @@ const EmailInviteForm: React.FC<InviteFormProps> = ({ slug }) => {
             </div>
 
             <div className="text-xs text-gray-400">
-              <div>Cadastrado em: {invite.createdAt ? new Date(invite.createdAt).toLocaleString() : "-"}</div>
+              <div>Cadastrado em: {invite.createdAt ? invite.createdAt.toLocaleString() : "-"}</div>
             </div>
 
             <div className="flex gap-2 mt-4">

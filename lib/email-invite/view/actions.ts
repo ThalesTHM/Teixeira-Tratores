@@ -5,7 +5,7 @@ import { adminFirestore } from "@/firebase/firebase-admin";
 export interface EmailInvite {
   address: string;
   cpf: string;
-  createdAt: number;
+  createdAt: Date;
   email: string;
   name: string;
   pnumber: string;

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { formatDate } from '@/lib/date-utils';
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getClientBySlug } from "@/lib/client/view/actions";
@@ -202,7 +203,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ slug }) => {
             </div>
           </div>
           <div className="text-xs text-gray-400 mt-2">
-            Cadastrado em: {client.createdAt ? new Date(client.createdAt).toLocaleString() : "-"}
+            Cadastrado em: {formatDate(client.createdAt)}
           </div>
           <div className="flex gap-2 mt-4">
             {editMode ? (

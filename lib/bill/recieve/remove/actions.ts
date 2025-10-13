@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
@@ -14,14 +14,13 @@ export const removeBillToReceive = async (slug: string) => {
     };
   }
 
+  const billsToReceiveRepository = new BillsToReceiveRepository();
   let billDoc;
   
   try {
-    billDoc = await adminFirestore.collection("billsToReceive")
-      .where("slug", "==", slug)
-      .get();
+    billDoc = await billsToReceiveRepository.findBySlug(slug);
 
-    if (billDoc.empty) {
+    if (!billDoc) {
       return { success: false, error: 'Bill not found.' };
     }
   } catch (error) {
@@ -32,7 +31,7 @@ export const removeBillToReceive = async (slug: string) => {
   }
 
   try {
-    await adminFirestore.collection("billsToReceive").doc(slug).delete();
+    await billsToReceiveRepository.delete(billDoc.id);
   } catch (error) {
     return {
       success: false,
@@ -40,7 +39,7 @@ export const removeBillToReceive = async (slug: string) => {
     };
   }
 
-  const name = billDoc.docs[0].data().name || "Conta a Receber";
+  const name = billDoc.name || "Conta a Receber";
   
   const notification = {
     message: `Conta a Receber "${name}" Foi Excluída.`,

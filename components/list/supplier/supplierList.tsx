@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { viewSuppliers } from "@/lib/supplier/view/actions";
+import { formatDate } from '@/lib/date-utils';
 import Link from "next/link";
 
 const SupplierList = () => {
@@ -63,7 +64,7 @@ const SupplierList = () => {
           <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">
             <span className="text-lg font-medium">{supplier.name}</span>
             <span className="text-xs text-gray-400">
-              {supplier.createdAt ? new Date(supplier.createdAt).toLocaleString() : "-"}
+              {formatDate(supplier.createdAt)}
             </span>
           </Card>
         </Link>

@@ -26,8 +26,6 @@ export async function GET(req: NextRequest, {params}: { params: { slug: string }
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
   const slug = (await params).slug;
 
   const usersRef = await adminFirestore.collection("users");

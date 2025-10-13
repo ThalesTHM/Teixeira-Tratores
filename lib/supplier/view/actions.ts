@@ -11,7 +11,7 @@ type Supplier = {
   pnumber: string;
   description: string;
   slug: string;
-  createdAt?: number;
+  createdAt?: Date;
   updatedAt?: number;
 };
 

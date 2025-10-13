@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserFromSession } from "@/lib/auth";
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { EmployeeHoursRepository } from "@/database/repositories/Repositories";
 import { EmployeeHourFormSchema } from "./validations";
 import { z } from "zod";
 import { NotificationPriority, NotificationRole, NotificationSource } from "@/services/notifications/NotificationsService";
@@ -84,11 +84,8 @@ export const createEmployeeHour = async (formData: FormData) => {
     };
 
     try {
-        const employeeHoursCollection = adminFirestore.collection('employeeHours');
-        await employeeHoursCollection.add({
-            ...employeeHour,
-            createdAt: Date.now(),
-        });
+        const employeeHoursRepository = new EmployeeHoursRepository();
+        await employeeHoursRepository.create(employeeHour);
     } catch (error) {
         console.log("error: ", error);
 

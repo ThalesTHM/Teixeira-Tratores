@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ClientsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
@@ -10,14 +10,16 @@ export const removeClient = async (slug: string) => {
     return { success: false, error: 'User not authenticated.' };
   }
   try {
-    const clientsCollection = adminFirestore.collection('clients');
-    const querySnapshot = await clientsCollection.where('slug', '==', slug).limit(1).get();
-    if (querySnapshot.empty) {
+    const clientsRepository = new ClientsRepository();
+    const clientData = await clientsRepository.findBySlug(slug);
+    
+    if (!clientData) {
       return { success: false, error: 'Client not found.' };
     }
-    const doc = querySnapshot.docs[0];
-    const name = doc.data().name || "Cliente";
-    await doc.ref.delete();
+    
+    const name = clientData.name || "Cliente";
+    await clientsRepository.delete(clientData.id);
+    
     // Notification
     const notification = {
       message: `Cliente "${name}" foi excluído.`,

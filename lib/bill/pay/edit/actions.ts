@@ -3,7 +3,7 @@
 import { getUserFromSession } from "@/lib/auth";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToPayRepository } from "@/database/repositories/Repositories";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const editBillToPay = async (slug: string, data: any) => {
@@ -13,27 +13,23 @@ export const editBillToPay = async (slug: string, data: any) => {
     return { success: false, error: 'User not authenticated' };
   }
 
+  const billsToPayRepository = new BillsToPayRepository();
   let billDoc;
 
   try {
-    const billsCollection = adminFirestore.collection('billsToPay');
-    billDoc = await billsCollection
-      .where('slug', '==', slug)
-      .get();
+    billDoc = await billsToPayRepository.findBySlug(slug);
 
-    if (billDoc.empty) {     
+    if (!billDoc) {     
       return { success: false, error: 'Bill not found' };
     }
 
-    const doc = billDoc.docs[0].data();
-
-    if (doc.name === data.name &&
-      doc.price === data.price &&
-      doc.expireDate === data.expireDate &&
-      doc.paymentMethod === data.paymentMethod &&
-      doc.paymentStatus === data.paymentStatus &&
-      doc.supplier === data.supplier &&
-      doc.description === data.description
+    if (billDoc.name === data.name &&
+      billDoc.price === data.price &&
+      billDoc.expireDate === data.expireDate &&
+      billDoc.paymentMethod === data.paymentMethod &&
+      billDoc.paymentStatus === data.paymentStatus &&
+      billDoc.supplier === data.supplier &&
+      billDoc.description === data.description
     ) {
       return { success: false, error: 'A bill with the same data already exists' };
     }
@@ -51,16 +47,7 @@ export const editBillToPay = async (slug: string, data: any) => {
   }
 
   try {
-    const billsCollection = adminFirestore.collection('billsToPay');
-    const querySnapshot = await billsCollection.where('slug', '==', slug).limit(1).get();
-    
-    if (querySnapshot.empty) {
-      return { success: false, error: 'Bill not found' };
-    }
-
-    const bill = querySnapshot.docs[0];
-
-    await bill.ref.update({
+    const updateData = {
       name: data.name,
       price: data.price,
       expireDate: data.expireDate,
@@ -68,9 +55,11 @@ export const editBillToPay = async (slug: string, data: any) => {
       paymentStatus: data.paymentStatus,
       supplier: data.supplier,
       description: data.description
-    });
+    };
 
-    const name = bill.data().name || "Conta a Pagar";
+    await billsToPayRepository.update(billDoc.id, updateData);
+
+    const name = billDoc.name || "Conta a Pagar";
 
     const notification = {
       message: `Conta a Pagar "${name}" Foi Editada.`,

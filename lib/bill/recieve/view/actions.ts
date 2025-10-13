@@ -1,11 +1,11 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
 
 export const viewBillsToReceive = async () => {
   try {
-    const billsSnapshot = await adminFirestore.collection("billsToReceive").get();
-    const bills = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const billsToReceiveRepository = new BillsToReceiveRepository();
+    const bills = await billsToReceiveRepository.findAll();
     return { success: true, bills };
   } catch (error) {
     return { success: false, error: "Erro ao buscar contas a receber." };
@@ -14,10 +14,10 @@ export const viewBillsToReceive = async () => {
 
 export const getBillToReceiveBySlug = async (slug: string) => {
   try {
-    const doc = await adminFirestore.collection("billsToReceive").where("slug", "==", slug).limit(1).get();
-    if (doc.empty) return { success: false, error: "Conta a receber não encontrada." };
-    const docData = doc.docs[0];
-    return { success: true, data: { id: docData.id, ...docData.data() } };
+    const billsToReceiveRepository = new BillsToReceiveRepository();
+    const bill = await billsToReceiveRepository.findBySlug(slug);
+    if (!bill) return { success: false, error: "Conta a receber não encontrada." };
+    return { success: true, data: bill };
   } catch (error) {
     return { success: false, error: "Erro ao buscar conta a receber." };
   }

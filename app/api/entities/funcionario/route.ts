@@ -26,8 +26,6 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
   const usersRef = await adminFirestore.collection("users");
 
   const unsubscribe = await usersRef.onSnapshot(snapshot => {

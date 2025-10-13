@@ -156,7 +156,7 @@ const generatePasswordRecoveryRequest = async (email: string) => {
   await passwordRecoveryRequestsCollection.add(
     {
       email,
-      createdAt: Date.now(),
+      createdAt: new Date(),
     }
   )
 
@@ -237,7 +237,7 @@ export const allowPasswordRecovery = async (email: string) => {
       {
         email,
         code,
-        createdAt: Date.now(),
+        createdAt: new Date(),
       }
     );
 
@@ -284,8 +284,8 @@ const createUserDocument = async (email: string, uid: string) => {
     cpf: emailInvite.cpf || "",
     address: emailInvite.address || "",
     slug: emailInvite.slug || "",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   }
 
   const notification = {

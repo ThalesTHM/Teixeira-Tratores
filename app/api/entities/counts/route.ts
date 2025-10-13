@@ -1,6 +1,13 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { 
+  ProjectsRepository, 
+  ClientsRepository, 
+  SuppliersRepository, 
+  UsersRepository, 
+  BillsToPayRepository, 
+  BillsToReceiveRepository 
+} from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
@@ -15,27 +22,43 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
-  const collections = [
-    { name: "projects", key: "projetos" },
-    { name: "clients", key: "clientes" },
-    { name: "suppliers", key: "fornecedores" },
-    { name: "users", key: "funcionarios" },
-    { name: "billsToPay", key: "contasPagar" },
-    { name: "billsToReceive", key: "contasReceber" }
+  const repositories = [
+    { repository: new ProjectsRepository(), key: "projetos" },
+    { repository: new ClientsRepository(), key: "clientes" },
+    { repository: new SuppliersRepository(), key: "fornecedores" },
+    { repository: new UsersRepository(), key: "funcionarios" },
+    { repository: new BillsToPayRepository(), key: "contasPagar" },
+    { repository: new BillsToReceiveRepository(), key: "contasReceber" }
   ];
 
-  const unsubscribes = collections.map(({ name, key }) => {
-    return adminFirestore.collection(name).onSnapshot(snapshot => {
-      const size = snapshot.size;
-      const payload = `data: ${JSON.stringify({ [key]: size })}\n\n`;
-      writer.write(encoder.encode(payload));
+  const counts: Record<string, number> = {};
+  const unsubscribers: Array<() => void> = [];
+  let initializedKeys = new Set<string>();
+
+  const sendData = () => {
+    try {
+      // Only send if we have data for all repositories
+      if (initializedKeys.size === repositories.length) {
+        const payload = `data: ${JSON.stringify(counts)}\n\n`;
+        writer.write(encoder.encode(payload));
+      }
+    } catch (error) {
+      console.error('Error sending counts data:', error);
+    }
+  };
+
+  // Set up subscriptions for each repository
+  repositories.forEach(({ repository, key }) => {
+    const unsubscribe = repository.subscribeToAll((data: any[]) => {
+      counts[key] = data.length;
+      initializedKeys.add(key);
+      sendData(); // Send immediately when any data updates
     });
+    unsubscribers.push(unsubscribe);
   });
 
   req.signal.addEventListener("abort", () => {
-    unsubscribes.forEach(unsubscribe => unsubscribe());
+    unsubscribers.forEach(unsubscribe => unsubscribe());
     writer.close();
   });
 

@@ -20,8 +20,6 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
   const notificationsRef = adminFirestore.collection("notifications")
     .where('role', '>=', rolePriority)
     .orderBy("role", "desc")

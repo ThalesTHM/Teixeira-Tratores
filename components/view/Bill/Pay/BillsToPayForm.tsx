@@ -318,7 +318,7 @@ const BillsToPayForm: React.FC<BillsToPayFormProps> = ({ slug }) => {
             )}
           </div>
           <div className="text-xs text-gray-400 mt-2">
-            Cadastrado em: {bill.createdAt ? new Date(bill.createdAt).toLocaleString() : '-'}
+            Cadastrado em: {bill.createdAt ? bill.createdAt.toLocaleString() : '-'}
           </div>
           <div className="flex gap-2 mt-4">
             {editMode ? (

@@ -1,7 +1,7 @@
 "use server";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ProjectsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 
 export const removeProject = async (slug: string) => {
@@ -10,14 +10,16 @@ export const removeProject = async (slug: string) => {
     return { success: false, error: 'User not authenticated.' };
   }
   try {
-    const projectsCollection = adminFirestore.collection('projects');
-    const querySnapshot = await projectsCollection.where('slug', '==', slug).limit(1).get();
-    if (querySnapshot.empty) {
+    const projectsRepository = new ProjectsRepository();
+    const projectData = await projectsRepository.findBySlug(slug);
+    
+    if (!projectData) {
       return { success: false, error: 'Project not found.' };
     }
-    const doc = querySnapshot.docs[0];
-    const name = doc.data().name || "Projeto";
-    await doc.ref.delete();
+    
+    const name = projectData.name || "Projeto";
+    await projectsRepository.delete(projectData.id);
+    
     // Notification
     const notification = {
       message: `Projeto "${name}" foi excluído.`,

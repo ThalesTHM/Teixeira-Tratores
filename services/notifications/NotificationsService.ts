@@ -1,5 +1,6 @@
 "server only";
 
+import { NotificationsRepository } from "@/database/repositories/Repositories";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
 import { FieldValue } from "firebase-admin/firestore";
@@ -48,10 +49,10 @@ export type CreateNotificationResult = {
 
 const isAlreadyRead = async (notificationId: string, userId: string): Promise<boolean> => {
     try {
-        const docRef = await adminFirestore.collection('notifications').doc(notificationId).get();
-        if (docRef.exists) {
-            const data = docRef.data();
-            return data?.readBy?.includes(userId) || false;
+        const notificationsRepository = new NotificationsRepository();
+        const notification = await notificationsRepository.findById(notificationId);
+        if (notification) {
+            return notification.readBy?.includes(userId) || false;
         }
     } catch (error) {
         return true;
@@ -74,18 +75,17 @@ export class NotificationsService {
             NotificationRole.EMPLOYEE;
 
         try {
-            const notificationsRef = adminFirestore.collection('notifications');
-            const notificationsSnapshot = await notificationsRef
-                .where('role', '>=', rolePriority)
-                .orderBy('createdAt', 'desc')
-                .get();
+            const notificationsRepository = new NotificationsRepository();
+            const notifications = await notificationsRepository.findByField('role', rolePriority);
 
-            const notifications = notificationsSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            // Sort by createdAt descending (most recent first)
+            const sortedNotifications = notifications.sort((a, b) => {
+                const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : a.createdAt;
+                const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : b.createdAt;
+                return bTime - aTime;
+            });
 
-            return { success: true, notifications };
+            return { success: true, notifications: sortedNotifications };
         } catch (error) {
             console.error("Error fetching notifications:", error);
             return { success: false, error: "Error fetching notifications" };
@@ -109,7 +109,7 @@ export class NotificationsService {
             const notificationRef = adminFirestore.collection('notifications').doc(notificationId);
             await notificationRef.update({
                 readBy: FieldValue.arrayUnion(userId),
-                readAt: Date.now()
+                readAt: new Date()
             });
             return { success: true, error: "" };
         } catch (error) {
@@ -136,7 +136,7 @@ export class NotificationsService {
                 if(docData.softReadBy && !docData.softReadBy.includes(userId)) {
                     batch.update(doc.ref, {
                         softReadBy: FieldValue.arrayUnion(userId),
-                        softReadAt: Date.now()
+                        softReadAt: new Date()
                     });
                 }
             });
@@ -169,7 +169,6 @@ export class NotificationsService {
                 message,
                 readBy: [],
                 softReadBy: [],
-                createdAt: Date.now(),
                 priority,
                 notificationSource,
                 slug,
@@ -177,9 +176,10 @@ export class NotificationsService {
                 role
             };
 
-            const notificationRef = await adminFirestore.collection('notifications').add(notificationData);
+            const notificationsRepository = new NotificationsRepository();
+            const result = await notificationsRepository.create(notificationData);
             
-            return { success: true, notificationId: notificationRef.id, error: "" };
+            return { success: true, notificationId: result.id, error: "" };
         } catch (error) {
             console.error("Error sending notification:", error);
             return { success: false, error: "Error sending notification" };

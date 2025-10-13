@@ -6,5 +6,5 @@ export type Notification = {
   slug?: string | null;
   createdBy?: string;
   read: boolean;
-  createdAt?: number;
+  createdAt?: Date;
 };

@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserFromSession } from '@/lib/auth';
-import { adminFirestore } from '@/firebase/firebase-admin';
+import { BillsToPayRepository } from '@/database/repositories/Repositories';
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/NotificationsService';
 
 export const removeBillToPay = async (slug: string) => {
@@ -11,29 +11,26 @@ export const removeBillToPay = async (slug: string) => {
     return { success: false, error: 'User not authenticated' };
   }
 
+  const billsToPayRepository = new BillsToPayRepository();
   let billDoc;
 
   try {
-    const billsCollection = adminFirestore.collection('billsToPay');
-    billDoc = await billsCollection
-      .where('slug', '==', slug)
-      .get();
+    billDoc = await billsToPayRepository.findBySlug(slug);
       
-    if (billDoc.empty) {
+    if (!billDoc) {
       return { success: false, error: 'Bill not found' };
     }
 
-    const doc = billDoc.docs[0];
-    await doc.ref.delete();
+    await billsToPayRepository.delete(billDoc.id);
 
-    const name = doc.data().name || 'Conta a Pagar';
+    const name = billDoc.name || 'Conta a Pagar';
 
     const notification = {
-      message: `Conta a Receber "${name}" Foi Excluída.`,
+      message: `Conta a Pagar "${name}" Foi Excluída.`,
       role: NotificationRole.MANAGER,
       createdBy: session.name,
       priority: NotificationPriority.MEDIUM,
-      notificationSource: NotificationSource.BILL_TO_RECEIVE
+      notificationSource: NotificationSource.BILL_TO_PAY
     };
     
     const notificationRes = await NotificationsService.createNotification(notification);

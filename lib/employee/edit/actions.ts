@@ -94,7 +94,7 @@ export const editEmployee = async (slug: string, data: any) => {
       pnumber: data.pnumber,
       cpf: data.cpf,
       address: data.address,
-      updatedAt: Date.now(),
+      updatedAt: new Date(),
       updatedBy: session.name
    });
   } catch (error) {

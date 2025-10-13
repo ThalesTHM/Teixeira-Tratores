@@ -1,4 +1,11 @@
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { 
+  BillsToPayRepository, 
+  BillsToReceiveRepository, 
+  ProjectsRepository, 
+  ClientsRepository, 
+  SuppliersRepository, 
+  UsersRepository 
+} from "@/database/repositories/Repositories";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -58,46 +65,33 @@ export async function GET() {
         updateQueued = false;
 
         try {
+          const billsToPayRepository = new BillsToPayRepository();
+          const billsToReceiveRepository = new BillsToReceiveRepository();
+          const projectsRepository = new ProjectsRepository();
+          const clientsRepository = new ClientsRepository();
+          const suppliersRepository = new SuppliersRepository();
+          const usersRepository = new UsersRepository();
+
           const [
-            billsToPaySnap, 
-            billsToReceiveSnap, 
-            projectsSnap, 
-            clientsSnap, 
-            suppliersSnap, 
-            employeesSnap
+            billsToPayArr, 
+            billsToReceiveArr, 
+            projectsArr, 
+            clientsArr, 
+            suppliersArr, 
+            employeesArr
           ] = await Promise.all([
-            adminFirestore.collection("billsToPay").get(),
-            adminFirestore.collection("billsToReceive").get(),
-            adminFirestore.collection("projects").get(),
-            adminFirestore.collection("clients").get(),
-            adminFirestore.collection("suppliers").get(),
-            adminFirestore.collection("employees").get(),
+            billsToPayRepository.findAll(),
+            billsToReceiveRepository.findAll(),
+            projectsRepository.findAll(),
+            clientsRepository.findAll(),
+            suppliersRepository.findAll(),
+            usersRepository.findAll(),
           ]);
 
-          const billsToPayArr = billsToPaySnap.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id,
-            price: doc.data().price || 0
-          })) as Bill[];
-
-          const totalPay = billsToPayArr.reduce((sum, bill) => sum + bill.price, 0);
-
-          const billsToReceiveArr = billsToReceiveSnap.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id,
-            price: doc.data().price || 0
-          })) as Bill[];
-
-          const totalReceive = billsToReceiveArr.reduce((sum, bill) => sum + bill.price, 0);
-
-          const projectsArr = projectsSnap.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id,
-            expectedBudget: doc.data().expectedBudget || 0
-          })) as Project[];
-
+          const totalPay = billsToPayArr.reduce((sum, bill) => sum + (bill.price || 0), 0);
+          const totalReceive = billsToReceiveArr.reduce((sum, bill) => sum + (bill.price || 0), 0);
           const projectPricing = projectsArr.reduce((sum, project) => 
-            sum + project.expectedBudget, 0);
+            sum + (project.expectedBudget || 0), 0);
 
           const data: FinanceSummary = {
             billsToPay: billsToPayArr.length,
@@ -106,10 +100,10 @@ export async function GET() {
             totalReceive,
             projectPricing,
             grossProfit: totalReceive - totalPay,
-            clients: clientsSnap.size,
-            projects: projectsSnap.size,
-            suppliers: suppliersSnap.size,
-            employees: employeesSnap.size,
+            clients: clientsArr.length,
+            projects: projectsArr.length,
+            suppliers: suppliersArr.length,
+            employees: employeesArr.length,
           };
 
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
@@ -136,18 +130,12 @@ export async function GET() {
 
       processUpdate();
 
-      const unsubscribers = [
-        adminFirestore.collection("billsToPay").onSnapshot(debouncedUpdate),
-        adminFirestore.collection("billsToReceive").onSnapshot(debouncedUpdate),
-        adminFirestore.collection("projects").onSnapshot(debouncedUpdate),
-        adminFirestore.collection("clients").onSnapshot(debouncedUpdate),
-        adminFirestore.collection("suppliers").onSnapshot(debouncedUpdate),
-        adminFirestore.collection("employees").onSnapshot(debouncedUpdate),
-      ];
+      // Poll for updates every 5 seconds
+      const interval = setInterval(debouncedUpdate, 5000);
 
       return () => {
         isActive = false;
-        unsubscribers.forEach(unsubscribe => unsubscribe());
+        clearInterval(interval);
       };
     }
   });

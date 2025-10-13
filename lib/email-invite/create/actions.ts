@@ -66,7 +66,7 @@ export const createEmployee = async (formData: FormData) => {
         const emailInvitesCollection = adminFirestore.collection('emailInvites');
         await emailInvitesCollection.add({
             ...emailInviteData,
-            createdAt: Date.now()
+            createdAt: new Date()
         });
     } catch (error) {
         return {

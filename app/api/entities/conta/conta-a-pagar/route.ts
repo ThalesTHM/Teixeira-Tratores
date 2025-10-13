@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToPayRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
@@ -15,22 +15,15 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
+  const billsToPayRepository = new BillsToPayRepository();
 
-  const billsToPayRef = await adminFirestore.collection("billsToPay");
-
-  const unsubscribe = await billsToPayRef.onSnapshot(snapshot => {
-    const billsToPay = snapshot.docs.map(doc => {
-      const docData = doc.data();
-      if (!docData) return null;
-
-      return {
-        id: doc.id,
-        ...docData
-      };
-    });
-    const payload = `data: ${JSON.stringify(billsToPay)}\n\n`;
-    writer.write(encoder.encode(payload));
+  const unsubscribe = billsToPayRepository.subscribeToAll((billsToPay) => {
+    try {
+      const payload = `data: ${JSON.stringify(billsToPay)}\n\n`;
+      writer.write(encoder.encode(payload));
+    } catch (error) {
+      console.error('Error sending bills to pay data:', error);
+    }
   });
 
   req.signal.addEventListener("abort", () => {
