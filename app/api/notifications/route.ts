@@ -1,8 +1,8 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { NotificationsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
-import { NotificationRole } from "@/services/notifications/notifications-service";
+import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -22,34 +22,36 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
+  const notificationsRepository = new NotificationsRepository();
 
-  const notificationsRef = await adminFirestore.collection("notifications")
-    .where('role', '>=', rolePriority)
-    .orderBy("role", "desc")
-    .orderBy("createdAt", "desc");
+  const unsubscribe = notificationsRepository.subscribeWithFilter(
+    [{ field: 'role', operator: '>=', value: rolePriority }],
+    [
+      { field: 'role', direction: 'desc' },
+      { field: 'createdAt', direction: 'desc' }
+    ],
+    (allNotifications) => {
+      try {
+        const notifications = allNotifications.map(docData => {
+          const notification = { ...docData };
+          notification.read = notification.readBy?.includes(session.uid) || false;
+          notification.softRead = notification.softReadBy?.includes(session.uid) || false;
 
-  const unsubscribe = await notificationsRef.onSnapshot(snapshot => {
-    const notifications = snapshot.docs.map(doc => {
-      const docData = doc.data();
-      if (!docData) return null;
+          delete notification.readBy;
+          delete notification.softReadBy;
+          delete notification.softReadAt;
+          delete notification.readAt;
 
-      docData.read = docData.readBy?.includes(session.uid) || false;
-      docData.softRead = docData.softReadBy?.includes(session.uid) || false;
-
-      delete docData.readBy;
-      delete docData.softReadBy;
-      delete docData.softReadAt;
-      delete docData.readAt;
-
-      return {
-        id: doc.id,
-        ...docData
-      };
-    });
-    const payload = `data: ${JSON.stringify(notifications)}\n\n`;
-    writer.write(encoder.encode(payload));
-  });
+          return notification;
+        });
+        
+        const payload = `data: ${JSON.stringify(notifications)}\n\n`;
+        writer.write(encoder.encode(payload));
+      } catch (error) {
+        console.error('Error sending notifications data:', error);
+      }
+    }
+  );
 
   req.signal.addEventListener("abort", () => {
     unsubscribe();

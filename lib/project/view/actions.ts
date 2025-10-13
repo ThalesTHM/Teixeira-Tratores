@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ProjectsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 
 export type Project = {
@@ -11,7 +11,7 @@ export type Project = {
   description: string;
   client: string;
   slug: string;
-  createdAt?: number;
+  createdAt?: Date;
   updatedAt?: number;
 };
 
@@ -21,9 +21,8 @@ export const viewProjects = async () => {
     return { success: false, error: "User not authenticated.", projects: [] };
   }
   try {
-    const projectsCollection = adminFirestore.collection("projects");
-    const snapshot = await projectsCollection.get();
-    const projects: Project[] = snapshot.docs.map((doc) => doc.data() as Project);
+    const projectsRepository = new ProjectsRepository();
+    const projects = await projectsRepository.findAll();
     return { success: true, error: "", projects };
   } catch (error) {
     return { success: false, error: "Error fetching projects.", projects: [] };
@@ -36,12 +35,11 @@ export const getProjectBySlug = async (slug: string) => {
     return { success: false, error: "User not authenticated.", project: null };
   }
   try {
-    const projectsCollection = adminFirestore.collection("projects");
-    const snapshot = await projectsCollection.where("slug", "==", slug).limit(1).get();
-    if (snapshot.empty) {
+    const projectsRepository = new ProjectsRepository();
+    const project = await projectsRepository.findBySlug(slug);
+    if (!project) {
       return { success: false, error: "Project not found.", project: undefined };
     }
-    const project = snapshot.docs[0].data() as Project;
     console.log(project);
     
     return { success: true, error: "", project };

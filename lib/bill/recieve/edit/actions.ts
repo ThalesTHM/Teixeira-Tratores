@@ -1,9 +1,9 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 import { getUserFromSession } from "@/lib/auth";
 
 export const editBillToReceive = async (slug: string, formData: any) => {
@@ -16,6 +16,7 @@ export const editBillToReceive = async (slug: string, formData: any) => {
     };
   }
 
+  const billsToReceiveRepository = new BillsToReceiveRepository();
   let billDoc;
   
   try {
@@ -35,17 +36,13 @@ export const editBillToReceive = async (slug: string, formData: any) => {
   }
 
   try {
-    billDoc = await adminFirestore.collection("billsToReceive")
-    .where("slug", "==", slug)
-    .get();
+    billDoc = await billsToReceiveRepository.findBySlug(slug);
 
-    if (billDoc.empty) {
+    if (!billDoc) {
       return { success: false, error: 'Bill not found.' };
     }
 
-    const doc = billDoc.docs[0].data();
-
-    if (JSON.stringify(doc) === JSON.stringify(formData)) {
+    if (JSON.stringify(billDoc) === JSON.stringify(formData)) {
       return { success: false, error: 'No changes detected.' };
     }
   } catch (error) {
@@ -56,18 +53,7 @@ export const editBillToReceive = async (slug: string, formData: any) => {
   }
   
   try {
-    const billCollection = adminFirestore.collection("billsToReceive");
-    const snapshot = await billCollection.where("slug", "==", slug).limit(1).get();
-    console.log(slug);
-    
-    if (snapshot.empty) {
-      return { success: false, error: 'Bill not found.' };
-    }
-    const billDoc = snapshot.docs[0].ref;
-    
-    billDoc.update({
-      ...formData,
-    });
+    await billsToReceiveRepository.update(billDoc.id, formData);
   } catch (error) {
     if (error instanceof Error) {
       console.error("Error editing bill to receive:", error.message);
@@ -78,7 +64,7 @@ export const editBillToReceive = async (slug: string, formData: any) => {
     };
   }
 
-  const name = billDoc.docs[0].data().name || "Conta a Receber";
+  const name = billDoc.name || "Conta a Receber";
 
   const notification = {
       message: `Conta a Receber "${name}" Foi Editada.`,

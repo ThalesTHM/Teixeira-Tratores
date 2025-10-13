@@ -6,7 +6,7 @@ export interface Employee {
   id: string,
   address: string;
   cpf: string;
-  createdAt: number;
+  createdAt: Date;
   email: string;
   name: string;
   pnumber: string;

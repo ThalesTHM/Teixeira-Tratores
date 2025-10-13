@@ -1,7 +1,7 @@
 "use server";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ProjectsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { z } from "zod";
 import { projectFormSchema } from "./validation";
@@ -20,23 +20,29 @@ export const editProject = async (slug: string, data: any) => {
     return { success: false, error: 'Validation error.' };
   }
   try {
-    const projectsCollection = adminFirestore.collection('projects');
-    const duplicateSnapshot = await projectsCollection
-      .where('name', '==', data.name)
-      .where('expectedBudget', '==', data.expectedBudget)
-      .where('deadline', '==', data.deadline)
-      .where('description', '==', data.description)
-      .where('client', '==', data.client)
-      .get();
-    if (duplicateSnapshot.docs.length > 0 && !(duplicateSnapshot.docs.length === 1 && duplicateSnapshot.docs[0].data().slug === slug)) {
+    const projectsRepository = new ProjectsRepository();
+    
+    // Check for duplicates
+    const allProjects = await projectsRepository.findAll();
+    const duplicateProject = allProjects.find(project => 
+      project.name === data.name &&
+      project.expectedBudget === data.expectedBudget &&
+      project.deadline === data.deadline &&
+      project.description === data.description &&
+      project.client === data.client &&
+      project.slug !== slug
+    );
+    
+    if (duplicateProject) {
       return { success: false, error: 'A project with the same data already exists.' };
     }
-    const querySnapshot = await projectsCollection.where('slug', '==', slug).limit(1).get();
-    if (querySnapshot.empty) {
+    
+    const currentData = await projectsRepository.findBySlug(slug);
+    
+    if (!currentData) {
       return { success: false, error: 'Project not found.' };
     }
-    const doc = querySnapshot.docs[0];
-    const currentData = doc.data();
+    
     if (
       currentData.name === data.name &&
       currentData.expectedBudget === data.expectedBudget &&
@@ -53,7 +59,8 @@ export const editProject = async (slug: string, data: any) => {
     if (typeof data.deadline !== 'undefined') updateData.deadline = data.deadline;
     if (typeof data.description !== 'undefined') updateData.description = data.description;
     if (typeof data.client !== 'undefined') updateData.client = data.client;
-    await doc.ref.update(updateData);
+    
+    await projectsRepository.update(currentData.id, updateData);
 
     const name = currentData.name || "Projeto";
     const notification = {

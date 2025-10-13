@@ -1,5 +1,5 @@
 "use server";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
@@ -94,7 +94,7 @@ export const editEmployee = async (slug: string, data: any) => {
       pnumber: data.pnumber,
       cpf: data.cpf,
       address: data.address,
-      updatedAt: Date.now(),
+      updatedAt: new Date(),
       updatedBy: session.name
    });
   } catch (error) {

@@ -115,7 +115,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ slug }) => {
           pnumber: data.pnumber || "",
           cpf: data.cpf || "",
           address: data.address || "",
-          createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
+          createdAt: typeof data.createdAt === "object" ? data.createdAt : new Date(),
         });
         setError("");
         setLoading(false);
@@ -258,7 +258,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ slug }) => {
             </div>
           </div>
           <div className="text-xs text-gray-400 mt-2">
-            Cadastrado em: {employee.createdAt ? new Date(employee.createdAt).toLocaleString() : "-"}
+            Cadastrado em: {employee.createdAt ? employee.createdAt.toLocaleString() : "-"}
           </div>
           <div className="flex gap-2 mt-4">
             {editMode ? (

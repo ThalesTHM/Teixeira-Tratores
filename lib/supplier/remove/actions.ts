@@ -1,7 +1,7 @@
 "use server";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { SuppliersRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 
 export const removeSupplier = async (slug: string) => {
@@ -10,14 +10,16 @@ export const removeSupplier = async (slug: string) => {
     return { success: false, error: 'User not authenticated.' };
   }
   try {
-    const suppliersCollection = adminFirestore.collection('suppliers');
-    const querySnapshot = await suppliersCollection.where('slug', '==', slug).limit(1).get();
-    if (querySnapshot.empty) {
+    const suppliersRepository = new SuppliersRepository();
+    const supplierData = await suppliersRepository.findBySlug(slug);
+    
+    if (!supplierData) {
       return { success: false, error: 'Supplier not found.' };
     }
-    const doc = querySnapshot.docs[0];
-    const name = doc.data().name || "Fornecedor";
-    await doc.ref.delete();
+    
+    const name = supplierData.name || "Fornecedor";
+    await suppliersRepository.delete(supplierData.id);
+    
     // Notification
     const notification = {
       message: `Fornecedor "${name}" foi excluído.`,

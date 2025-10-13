@@ -41,7 +41,7 @@ const NotificationCard = ({ notification }: { notification: Notification}) => {
             {notification.message.replace(/\n/g, ' ')}
           </span>
           <span className='text-xs text-gray-400 mt-1'>
-            {new Date(notification.createdAt as number).toLocaleString()}
+            {(notification.createdAt as Date).toLocaleString()}
           </span>
         </div>
         <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[85%] h-[1.5px] bg-gray-200 rounded-full" />
@@ -78,7 +78,7 @@ const NotificationCard = ({ notification }: { notification: Notification}) => {
             {notification.message.replace(/\n/g, ' ')}
           </span>
           <span className='text-xs text-gray-400 mt-1'>
-            {new Date(notification.createdAt as number).toLocaleString()}
+            {(notification.createdAt as Date).toLocaleString()}
           </span>
         </div>
         <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[85%] h-[1.5px] bg-gray-200 rounded-full" />

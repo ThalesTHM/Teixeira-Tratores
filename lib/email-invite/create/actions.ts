@@ -5,7 +5,7 @@ import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
 import { nanoid } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 import { checkIfEmailIsAlreadyInUse, removeUsedInvite } from "../utils";
 
 function generateSlug() {
@@ -66,7 +66,7 @@ export const createEmployee = async (formData: FormData) => {
         const emailInvitesCollection = adminFirestore.collection('emailInvites');
         await emailInvitesCollection.add({
             ...emailInviteData,
-            createdAt: Date.now()
+            createdAt: new Date()
         });
     } catch (error) {
         return {

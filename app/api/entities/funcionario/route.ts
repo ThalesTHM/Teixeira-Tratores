@@ -2,7 +2,7 @@
 
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { getUserFromSession } from "@/lib/auth";
-import { NotificationRole } from "@/services/notifications/notifications-service";
+import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -25,8 +25,6 @@ export async function GET(req: NextRequest) {
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
-
-  writer.write(encoder.encode("retry: 3000\n\n"));
 
   const usersRef = await adminFirestore.collection("users");
 

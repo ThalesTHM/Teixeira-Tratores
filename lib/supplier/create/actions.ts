@@ -3,9 +3,9 @@
 import { getUserFromSession } from "@/lib/auth";
 import { supplierFormSchema } from "./validation";
 import { z } from "zod";
-import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
+import { SuppliersRepository } from "@/database/repositories/Repositories";
 import { customAlphabet } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 
@@ -54,13 +54,13 @@ export const createSupplier = async (formData: FormData) => {
     const slug = generateSlug(supplierData.name);
 
     try {
-        await adminFirestore.collection('suppliers').add({
+        const suppliersRepository = new SuppliersRepository();
+        await suppliersRepository.create({
             name: supplierData.name,
             cnpj: supplierData.cnpj,
             address: supplierData.address,
             pnumber: supplierData.pnumber,
             description: supplierData.description,
-            createdAt: Date.now(),
             slug
         });
     } catch (error) {

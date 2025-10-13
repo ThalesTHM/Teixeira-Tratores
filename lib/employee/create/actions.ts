@@ -5,7 +5,7 @@ import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
 import { nanoid } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 function generateSlug() {
     // Example: abcd12-efg34-hijk56-lmnop7
@@ -52,7 +52,7 @@ export const createEmployee = async (formData: FormData) => {
         const employeesCollection = adminFirestore.collection('emailInvites');
         await employeesCollection.add({
             ...employeeData,
-            createdAt: Date.now()
+            createdAt: new Date()
         });
     } catch (error) {
         return {

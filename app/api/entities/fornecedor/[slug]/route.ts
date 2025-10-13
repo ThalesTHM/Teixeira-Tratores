@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { SuppliersRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
@@ -15,29 +15,17 @@ export async function GET(req: NextRequest, {params}: { params: { slug: string }
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
-
   const slug = (await params).slug;
+  const suppliersRepository = new SuppliersRepository();
 
-  const suppliersRef = await adminFirestore.collection("suppliers");
-  const snapshot = await suppliersRef.where("slug", "==", slug);
-
-  const unsubscribe = await snapshot.onSnapshot(snapshot => {
-    if(snapshot.empty){
-      writer.write(`data: ${null}\n\n`);
+  const unsubscribe = suppliersRepository.subscribeBySlug(slug, (supplier) => {
+    try {
+      const payload = `data: ${JSON.stringify(supplier)}\n\n`;
+      writer.write(encoder.encode(payload));
+    } catch (error) {
+      console.error('Error sending supplier data:', error);
+      writer.write(encoder.encode(`data: ${JSON.stringify(null)}\n\n`));
     }
-    const doc = snapshot.docs[0]
-    
-    const client = doc.exists ? 
-      {
-        id: doc.id,
-        ...doc.data()
-      }
-    :
-      null;
-    
-    const payload = `data: ${JSON.stringify(client)}\n\n`;
-    writer.write(encoder.encode(payload));
   });
 
   req.signal.addEventListener("abort", () => {

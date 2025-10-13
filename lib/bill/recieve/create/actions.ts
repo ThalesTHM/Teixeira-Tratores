@@ -4,8 +4,8 @@ import { getUserFromSession } from "@/lib/auth";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { adminFirestore } from "@/firebase/firebase-admin";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const createBillToRecieve = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -43,11 +43,8 @@ export const createBillToRecieve = async (formData: FormData) => {
     }
 
     try {
-        const billsCollection = adminFirestore.collection('billsToReceive');
-        await billsCollection.add({
-            ...billData,
-            createdAt: Date.now()
-        });
+        const billsToReceiveRepository = new BillsToReceiveRepository();
+        await billsToReceiveRepository.create(billData);
     } catch (error) {
         return {
             success: false,

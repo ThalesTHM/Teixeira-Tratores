@@ -41,7 +41,6 @@ const Page = () => {
 
   useEffect(() => {
     const eventSource = new EventSource('/api/entities/counts');
-    let receivedCounts = 0;
 
     eventSource.onmessage = (event) => {
       try {
@@ -49,11 +48,8 @@ const Page = () => {
         setCounts(prev => {
           const newCounts = { ...prev, ...data };
           
-          // Only set loading to false after we've received at least one count for each type
-          receivedCounts++;
-          if (receivedCounts >= 6) {
-            newCounts.loading = false;
-          }
+          // Set loading to false once we receive data
+          newCounts.loading = false;
           
           return newCounts;
         });

@@ -1,6 +1,6 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ProjectsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { NextRequest } from "next/server";
 
@@ -15,22 +15,15 @@ export async function GET(req: NextRequest) {
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();
 
-  writer.write(encoder.encode("retry: 3000\n\n"));
+  const projectsRepository = new ProjectsRepository();
 
-  const projectsRef = await adminFirestore.collection("projects");
-
-  const unsubscribe = await projectsRef.onSnapshot(snapshot => {
-    const projects = snapshot.docs.map(doc => {
-      const docData = doc.data();
-      if (!docData) return null;
-
-      return {
-        id: doc.id,
-        ...docData
-      };
-    });
-    const payload = `data: ${JSON.stringify(projects)}\n\n`;
-    writer.write(encoder.encode(payload));
+  const unsubscribe = projectsRepository.subscribeToAll((projects) => {
+    try {
+      const payload = `data: ${JSON.stringify(projects)}\n\n`;
+      writer.write(encoder.encode(payload));
+    } catch (error) {
+      console.error('Error sending projects data:', error);
+    }
   });
 
   req.signal.addEventListener("abort", () => {

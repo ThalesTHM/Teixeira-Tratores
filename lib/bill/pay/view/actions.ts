@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserFromSession } from '@/lib/auth';
-import { adminFirestore } from '@/firebase/firebase-admin';
+import { BillsToPayRepository } from '@/database/repositories/Repositories';
 
 export const getBillsToPayBySlug = async (slug: string) => {
   const session = await getUserFromSession();
@@ -11,15 +11,14 @@ export const getBillsToPayBySlug = async (slug: string) => {
   }
 
   try {
-    const billsCollection = adminFirestore.collection('billsToPay');
-    const billSnapshot = await billsCollection.where('slug', '==', slug).limit(1).get();
+    const billsToPayRepository = new BillsToPayRepository();
+    const bill = await billsToPayRepository.findBySlug(slug);
 
-    if (billSnapshot.empty) {
+    if (!bill) {
       return { success: false, error: 'Bill not found' };
     }
 
-    const billData = billSnapshot.docs[0].data();
-    return { success: true, bill: billData, error: '' };
+    return { success: true, bill, error: '' };
   } catch (error) {
     return { success: false, error: 'Error retrieving the bill' };
   }
@@ -33,15 +32,14 @@ export const viewBillsToPay = async () => {
   }
 
   try {
-    const billsCollection = adminFirestore.collection('billsToPay');
-    const snapshot = await billsCollection.get();
+    const billsToPayRepository = new BillsToPayRepository();
+    const bills = await billsToPayRepository.findAll();
 
-    if (snapshot.empty) {
+    if (bills.length === 0) {
       return { success: true, data: null, error: '' };
     }
 
-    const billsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return { success: true, bills: billsData, error: '' };
+    return { success: true, bills, error: '' };
   } catch (error) {
     return { success: false, error: 'Error retrieving bills' };
   }

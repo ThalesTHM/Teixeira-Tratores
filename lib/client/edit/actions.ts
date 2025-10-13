@@ -1,10 +1,10 @@
 "use server";
 
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ClientsRepository } from "@/database/repositories/Repositories";
 import { getUserFromSession } from "@/lib/auth";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
-import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const editClient = async (slug: string, data: any) => {
   const session = await getUserFromSession();
@@ -23,29 +23,29 @@ export const editClient = async (slug: string, data: any) => {
     return { success: false, error: 'Validation error.' };
   }
   try {
-    const clientsCollection = adminFirestore.collection('clients');
+    const clientsRepository = new ClientsRepository();
 
-    const duplicateSnapshot = await clientsCollection
-      .where('name', '==', data.name)
-      .where('cpf', '==', data.cpf)
-      .where('address', '==', data.address)
-      .where('pnumber', '==', data.pnumber)
-      .get();
+    // Check for duplicates
+    const allClients = await clientsRepository.findAll();
+    const duplicateClient = allClients.find(client => 
+      client.name === data.name && 
+      client.cpf === data.cpf && 
+      client.address === data.address && 
+      client.pnumber === data.pnumber &&
+      client.slug !== slug
+    );
 
-    if (duplicateSnapshot.docs.length > 0) {
+    if (duplicateClient) {
       return { success: false, error: 'A client with the same data already exists.' };
     }
 
-    const querySnapshot = await clientsCollection.where('slug', '==', slug).limit(1).get();
+    const clientData = await clientsRepository.findBySlug(slug);
 
-    if (querySnapshot.empty) {
+    if (!clientData) {
       return { success: false, error: 'Client not found.' };
     }
 
-    const doc = querySnapshot.docs[0];
-    const clientData = doc.data();
-
-    await doc.ref.update({
+    await clientsRepository.update(clientData.id, {
       name: data.name,
       cpf: data.cpf,
       address: data.address,

@@ -3,11 +3,12 @@ import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { Card } from '../ui/card';
 import { capitalize } from '@/lib/utils';
+import { formatDate } from '@/lib/date-utils';
 
 interface GenericItem {
     name: string;
     slug: string;
-    createdAt: number;
+    createdAt: Date;
 };
 
 const checkListTitleGender = (listTitle: string) => {
@@ -88,9 +89,7 @@ const GenericList = ({ listTitle, items, loading, error }: { listTitle: string, 
             <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">
               <span className="text-lg font-medium break-words truncate whitespace-normal">{item.name}</span>
               <span className="text-xs text-gray-400">
-                {item.createdAt
-                  ? new Date(item.createdAt).toLocaleString()
-                  : "-"}
+                {formatDate(item.createdAt)}
               </span>
             </Card>
           </Link>

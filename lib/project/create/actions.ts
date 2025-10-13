@@ -2,10 +2,10 @@
 
 import { getUserFromSession } from "@/lib/auth";
 import { z } from "zod";
-import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
+import { ProjectsRepository } from "@/database/repositories/Repositories";
 import { projectFormSchema } from "./validation";
 import { customAlphabet } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 
@@ -53,14 +53,13 @@ export const createProject = async (formData: FormData) => {
     const slug = generateSlug((projectData.name ?? "") as string);
 
     try {
-        const projectsCollection = adminFirestore.collection('projects');
-        await projectsCollection.add({
+        const projectsRepository = new ProjectsRepository();
+        await projectsRepository.create({
             name: projectData.name,
             expectedBudget: projectData.expectedBudget,
             deadline: projectData.deadline,
             description: projectData.description,
             client: projectData.client,
-            createdAt: Date.now(),
             slug
         });
     } catch (error) {

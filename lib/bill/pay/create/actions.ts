@@ -3,9 +3,9 @@
 import { getUserFromSession } from "@/lib/auth";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { BillsToPayRepository } from "@/database/repositories/Repositories";
 import { nanoid } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const createBillToPay = async (formData: FormData) => {
     const session = await getUserFromSession();
@@ -28,7 +28,6 @@ export const createBillToPay = async (formData: FormData) => {
         supplier: formData.get('supplier'),
         description: formData.get('description'),
         slug,
-        createdAt: Date.now()
     }
 
     try{
@@ -45,8 +44,8 @@ export const createBillToPay = async (formData: FormData) => {
     }
 
     try {
-        const billsCollection = adminFirestore.collection('billsToPay');
-        await billsCollection.add(billData);
+        const billsToPayRepository = new BillsToPayRepository();
+        await billsToPayRepository.create(billData);
     } catch (error) {
         return {
             success: false,

@@ -3,9 +3,9 @@
 import { getUserFromSession } from "@/lib/auth";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ClientsRepository } from "@/database/repositories/Repositories";
 import { customAlphabet } from "nanoid";
-import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/notifications-service";
+import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 6);
 
@@ -47,14 +47,13 @@ export const createClient = async (formData: FormData) => {
     const slug = generateSlug();
 
     try {
-        const clientsCollection = adminFirestore.collection('clients');
-        await clientsCollection.add({
+        const clientsRepository = new ClientsRepository();
+        await clientsRepository.create({
             name: clientData.name,
             cpf: clientData.cpf,
             address: clientData.address,
             pnumber: clientData.pnumber,
             slug: slug,
-            createdAt: Date.now(),
         });
     } catch (error) {
         return {

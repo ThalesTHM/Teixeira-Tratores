@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserFromSession } from "@/lib/auth";
-import { adminFirestore } from "@/firebase/firebase-admin";
+import { ClientsRepository } from "@/database/repositories/Repositories";
 
 type Client = {
     id: string;
@@ -10,7 +10,7 @@ type Client = {
     address: string;
     pnumber: string;
     slug: string;
-    createdAt?: number;
+    createdAt?: Date;
     updatedAt?: number;
 };
 
@@ -24,20 +24,8 @@ export const viewClients = async (): Promise<{ success: boolean; error: string; 
         };
     }
     try {
-        const clientsSnapshot = await adminFirestore.collection('clients').get();
-        const clients: Client[] = clientsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                name: data?.name ?? '',
-                cnpj: data?.cnpj ?? '',
-                address: data?.address ?? '',
-                pnumber: data?.pnumber ?? '',
-                slug: data?.slug ?? '',
-                createdAt: data?.createdAt,
-                updatedAt: data?.updatedAt,
-            };
-        });
+        const clientsRepository = new ClientsRepository();
+        const clients = await clientsRepository.findAll();
         return {
             success: true,
             clients,
@@ -55,19 +43,18 @@ export const viewClients = async (): Promise<{ success: boolean; error: string; 
 // Get a client by slug
 export const getClientBySlug = async (slug: string) => {
     try {
-        const clientsCollection = adminFirestore.collection('clients');
-        const querySnapshot = await clientsCollection.where('slug', '==', slug).limit(1).get();
-        if (querySnapshot.empty) {
+        const clientsRepository = new ClientsRepository();
+        const client = await clientsRepository.findBySlug(slug);
+        if (!client) {
             return {
                 success: false,
                 error: 'Cliente não encontrado.',
                 client: null
             };
         }
-        const doc = querySnapshot.docs[0];
         return {
             success: true,
-            client: { id: doc.id, ...doc.data() },
+            client,
             error: ''
         };
     } catch (error) {
@@ -89,25 +76,15 @@ export const getClientById = async (id: string): Promise<{ success: boolean; err
         };
     }
     try {
-        const clientDoc = await adminFirestore.collection('clients').doc(id).get();
-        if (!clientDoc.exists) {
+        const clientsRepository = new ClientsRepository();
+        const client = await clientsRepository.findById(id);
+        if (!client) {
             return {
                 success: false,
                 error: "Client not found",
                 client: null
             };
         }
-        const data = clientDoc.data();
-        const client: Client = {
-            id: clientDoc.id,
-            name: data?.name ?? '',
-            cnpj: data?.cnpj ?? '',
-            address: data?.address ?? '',
-            pnumber: data?.pnumber ?? '',
-            slug: data?.slug ?? '',
-            createdAt: data?.createdAt,
-            updatedAt: data?.updatedAt,
-        };
         return {
             success: true,
             client,

@@ -26,7 +26,7 @@ interface Project {
   deadline: number;
   description: string;
   client: string;
-  createdAt: number;
+  createdAt: Date;
 }
 
 type ProjectFormProps = {
@@ -137,7 +137,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ slug }) => {
           deadline: typeof data.deadline === "number" ? data.deadline : 0,
           description: data.description || "",
           client: data.client,
-          createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
+          createdAt: typeof data.createdAt === "object" ? data.createdAt : new Date(),
         });
 
         setError("");
@@ -307,7 +307,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ slug }) => {
               ))}
             </div>
             <div className="mb-2 text-xs text-gray-400">
-              Cadastrado em: {project.createdAt ? new Date(project.createdAt).toLocaleString() : "-"}
+              Cadastrado em: {project.createdAt ? project.createdAt.toLocaleString() : "-"}
             </div>
             <div className="flex gap-2 mt-4">
               {editMode ? (

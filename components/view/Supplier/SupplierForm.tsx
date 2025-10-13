@@ -215,7 +215,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ slug }) => {
             )}
           </div>
           <div className="text-xs text-gray-400 mt-2">
-            Cadastrado em: {supplier.createdAt ? new Date(supplier.createdAt).toLocaleString() : "-"}
+            Cadastrado em: {supplier.createdAt ? supplier.createdAt.toLocaleString() : "-"}
           </div>
           <div className="flex gap-2 mt-4">
             {editMode ? (
