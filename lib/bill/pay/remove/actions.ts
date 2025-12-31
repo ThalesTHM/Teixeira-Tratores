@@ -5,9 +5,8 @@ import { BillsToPayRepository } from '@/database/repositories/Repositories';
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from '@/services/notifications/NotificationsService';
 
 export const removeBillToPay = async (slug: string) => {
-  const session = await getUserFromSession();
-
-  if (!session) {
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();  if (!session) {
     return { success: false, error: 'User not authenticated' };
   }
 

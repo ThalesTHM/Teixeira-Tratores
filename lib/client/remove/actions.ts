@@ -1,11 +1,12 @@
 "use server";
 
 import { ClientsRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const removeClient = async (slug: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   if (!session) {
     return { success: false, error: 'User not authenticated.' };
   }

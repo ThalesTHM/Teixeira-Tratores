@@ -1,7 +1,9 @@
 "server only";
 
 import { adminStorage } from "../../firebase/firebase-admin";
-import { getUserFromSession } from "../../lib/auth";
+import fs from "fs";
+import path from "path";
+import { SessionService } from "../session/SessionService";
 import { Bucket } from '@google-cloud/storage';
 
 type UploadableFile = Buffer | {
@@ -13,9 +15,11 @@ type UploadableFile = Buffer | {
 export class StorageService {
     private adminStorage: any;
     private bucket: Bucket;
+    private sessionService: SessionService;
 
     constructor() {
         this.adminStorage = adminStorage;
+        this.sessionService = new SessionService();
         const bucketName = process.env.GCLOUD_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
         if (!bucketName) throw new Error('Bucket name not set in environment variables');
         this.bucket = this.adminStorage.bucket(bucketName);
@@ -23,7 +27,7 @@ export class StorageService {
 
 
     async _requireSession(): Promise<any> {
-        const user = await getUserFromSession();
+        const user = await this.sessionService.getUserFromSession();
         if (!user) {
             throw new Error("Unauthorized");
         }

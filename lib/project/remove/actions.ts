@@ -2,10 +2,11 @@
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 import { ProjectsRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 
 export const removeProject = async (slug: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   if (!session) {
     return { success: false, error: 'User not authenticated.' };
   }

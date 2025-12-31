@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { EmployeeHoursRepository } from "@/database/repositories/Repositories";
 import { EmployeeHourFormSchema } from "./validations";
 import { z } from "zod";
@@ -13,8 +13,9 @@ function generateSlug() {
     return [nanoid(), nanoid(), nanoid(), nanoid()].join('-');
 }
 
-export const createEmployeeHour = async (formData: FormData) => {
-    const session = await getUserFromSession();
+export const createEmployeeHours = async (formData: FormData) => {
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {

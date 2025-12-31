@@ -1,11 +1,10 @@
 "use server";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
-import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
+import { EmployeeService } from "@/services/employee/EmployeeService";
 import { employeeFormSchema } from "./validation";
 import { z } from "zod";
-import { getUserFromSession } from "@/lib/auth";
-import { getEmployeeBySlug } from "../view/actions";
+import { SessionService } from "@/services/session/SessionService";
 
 const checkIfEmployeeIsEqual = (originalEmployee: any, data: any) => {
   return originalEmployee.name === data.name &&
@@ -16,22 +15,14 @@ const checkIfEmployeeIsEqual = (originalEmployee: any, data: any) => {
          originalEmployee.address === data.address;
 }
 
-const checkEmailIsInUse = async (email: string) => {
-  try {
-    return await adminAuth.getUserByEmail(email);
-  } catch (error) {
-    return null;
-  }
-}
-
 export const editEmployee = async (slug: string, data: any) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: "User Not Authenticated" };
   }
 
-  
   try {
     await employeeFormSchema.parseAsync(data);
   } catch (error) {
@@ -44,67 +35,35 @@ export const editEmployee = async (slug: string, data: any) => {
     }
   }
 
-  const originalEmployeeRes = await getEmployeeBySlug(slug);
+  const originalEmployeeRes = await EmployeeService.getEmployeeBySlug(slug);
   
   if (!originalEmployeeRes.success) {
     return { success: false, error: originalEmployeeRes.error };
   }
 
-  const originalEmployee = originalEmployeeRes.employee;
+  const originalEmployee = originalEmployeeRes.employee!;
 
   if (checkIfEmployeeIsEqual(originalEmployee, data)) {
     return { success: false, error: "An employee with the same data already exists." };
   }
 
-  try {
-    if(originalEmployee.email !== data.email){
-      const emailInUse = await checkEmailIsInUse(data.email);
-      if (emailInUse) {
-        return { success: false, error: "Email already in use" };
-      }
+  if(originalEmployee.email !== data.email){
+    const emailInUse = await EmployeeService.checkEmailExists(data.email);
+    if (emailInUse) {
+      return { success: false, error: "Email already in use" };
     }
-  } catch (error) {
-    return { success: false, error: "Error checking existing email" };
   }
 
   if(originalEmployee.email !== data.email) {
-    try {
-      await adminAuth.updateUser(session?.uid as string, {
-        email: data.email,
-      });
-    } catch (error) {
-      return { success: false, error: "Error Updating User Email" };
+    const authUpdateResult = await EmployeeService.updateEmployeeAuth(session?.uid as string, data.email);
+    if (!authUpdateResult.success) {
+      return { success: false, error: authUpdateResult.error || "Error Updating User Email" };
     }
   }
 
-  try {
-    const employeesCollection = adminFirestore.collection("users");
-    const snapshot = await employeesCollection.where("slug", "==", slug).limit(1).get();
-    
-    if (snapshot.empty) {
-      return { success: false, error: "Employee Not Found" };
-    }
-    
-    const doc = snapshot.docs[0];
-    
-    await doc.ref.update({ 
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      pnumber: data.pnumber,
-      cpf: data.cpf,
-      address: data.address,
-      updatedAt: new Date(),
-      updatedBy: session.name
-   });
-  } catch (error) {
-    if(error instanceof Error){
-      console.error("Error updating employee: ", error);
-      console.log("session: ", session);
-      return { success: false, error: error.message };
-    }
-
-    return { success: false, error: "Error Editing Employee" };
+  const updateResult = await EmployeeService.updateEmployee(slug, data);
+  if (!updateResult.success) {
+    return { success: false, error: updateResult.error || "Error Editing Employee" };
   }
 
   // Notification

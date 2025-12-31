@@ -1,13 +1,14 @@
 "use server";
 
 import { ClientsRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const editClient = async (slug: string, data: any) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   
   if (!session) {
     return { success: false, error: 'User not authenticated.' };

@@ -4,10 +4,12 @@ import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
+
+const sessionService = new SessionService();
 
 export const editBillToReceive = async (slug: string, formData: any) => {
-  const session = await getUserFromSession();
+  const session = await sessionService.getUserFromSession();
   
   if (!session) {
     return {

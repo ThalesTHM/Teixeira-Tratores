@@ -6,7 +6,7 @@ import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
 import { emailRecoverFormSchema } from '@/lib/validation';
 import { toast } from 'sonner';
-import { requestPasswordRecovery } from '@/lib/auth';
+import { requestPasswordRecovery } from '@/lib/password-recovery/actions';
 import Link from 'next/link';
 
 const PasswordRecovery = () => {

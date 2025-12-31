@@ -1,10 +1,11 @@
 import Navbar from "@/components/layout-global/Navbar";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { redirect } from "next/navigation";
 import { toast } from "sonner";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     redirect("/auth/login?redirected=true");

@@ -4,21 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
-import { signupFormSchema } from '@/lib/validation';
+import { signupFormSchema } from '@/lib/auth/auth-validation';
 import { toast } from 'sonner';
-import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth'
-import { auth } from '@/firebase/firebase';
 import { useRouter } from 'next/navigation';
-import { createSession, createUser } from '@/lib/auth';
+import { createSession, createUser } from '@/lib/auth/actions';
 import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/firebase/firebase';
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  
-  const [createUserWithEmailAndPassword] = useCreateUserWithEmailAndPassword(auth);
-
   const router = useRouter();
 
   const handleSignup = async (prevState: any, formData: FormData) => {

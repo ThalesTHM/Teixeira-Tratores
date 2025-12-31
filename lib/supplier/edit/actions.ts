@@ -2,12 +2,13 @@
 import { NotificationPriority, NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 import { SuppliersRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { supplierFormSchema } from "../create/validation";
 import { z } from "zod";
 
 export const editSupplier = async (slug: string, data: any) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   if (!session) {
     return { success: false, error: 'User not authenticated.' };
   }

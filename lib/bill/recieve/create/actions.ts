@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { billsToRecieveFormSchema } from "./validation";
 import { z } from "zod";
 import { nanoid } from "nanoid";
@@ -8,7 +8,8 @@ import { BillsToReceiveRepository } from "@/database/repositories/Repositories";
 import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
 export const createBillToRecieve = async (formData: FormData) => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {

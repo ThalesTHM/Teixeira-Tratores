@@ -1,4 +1,4 @@
-import { logout } from '@/lib/auth'
+import { logout } from '@/lib/auth/actions'
 import React from 'react'
 import { Button } from '../ui/button'
 
