@@ -3,9 +3,10 @@ import { SessionService } from "@/services/session/SessionService";
 import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { NextRequest } from "next/server";
 
+const sessionService = new SessionService();
+
 export async function GET(req: NextRequest) {
-  const sessionService = new SessionService();
-  import { SessionService } from "@/services/session/SessionService";
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
