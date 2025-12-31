@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SelectInput } from '@/components/utils/SelectInput';
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
-import { createEmployeeHour } from '@/lib/employee-hour/create/actions';
+//import { createEmployeeHour } from '@/lib/employee-hour/create/actions';
 import { employeeHourFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
@@ -143,7 +143,7 @@ const EmployeeHourForm = () => {
       }
     }
 
-    const res = await createEmployeeHour(formData);
+    const res = {success: "", error: ""}//await createEmployeeHour(formData);
 
     if(!res.success){
       toast.error("Erro ao Registrar as Horas");

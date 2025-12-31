@@ -4,7 +4,7 @@ import { NotificationPriority, NotificationRole, NotificationSource, Notificatio
 import { adminAuth, adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
 import { z } from "zod";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { getEmailInviteBySlug } from "../view/actions";
 import { checkIfEmailIsAlreadyInUse } from "../utils";
 
@@ -18,7 +18,8 @@ const checkIfEmailInviteIsEqual = (emailInvite: any, data: any) => {
 }
 
 export const editEmailInvite = async (slug: string, data: any) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: "User Not Authenticated" };

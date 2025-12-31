@@ -10,7 +10,7 @@ import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth'
 import { auth } from '@/firebase/firebase';
 import { useRouter } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
-import { createSession } from '@/lib/auth';
+import { createSession } from '@/lib/auth/actions';
 import { useSearchParams } from 'next/navigation';
 
 const Login = () => {

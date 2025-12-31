@@ -1,19 +1,14 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
+import { EmployeeService } from "@/services/employee/EmployeeService";
 import { z } from "zod";
-import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
-import { nanoid } from "nanoid";
 import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
 
-function generateSlug() {
-    // Example: abcd12-efg34-hijk56-lmnop7
-    return [nanoid(), nanoid(), nanoid(), nanoid()].join('-');
-}
-
 export const createEmployee = async (formData: FormData) => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {
@@ -22,17 +17,13 @@ export const createEmployee = async (formData: FormData) => {
         }
     }
 
-    const slug = generateSlug();
-
     const employeeData = {
         name: formData.get('name') as string,
         email: formData.get('email') as string,
         role: formData.get('role') as string,
         pnumber: formData.get('pnumber') as string,
         cpf: formData.get('cpf') as string,
-        address: formData.get('address') as string,
-        used: false,
-        slug: slug
+        address: formData.get('address') as string
     }
 
     try {
@@ -48,16 +39,12 @@ export const createEmployee = async (formData: FormData) => {
         }
     }
 
-    try {
-        const employeesCollection = adminFirestore.collection('emailInvites');
-        await employeesCollection.add({
-            ...employeeData,
-            createdAt: new Date()
-        });
-    } catch (error) {
+    const createResult = await EmployeeService.createEmployee(employeeData);
+    
+    if (!createResult.success) {
         return {
             success: false,
-            error: "Error Creating Employee",
+            error: createResult.error || "Error Creating Employee",
         }
     }
 
@@ -65,7 +52,7 @@ export const createEmployee = async (formData: FormData) => {
         message: `Funcionário "${employeeData.name}" Foi Convidado.`,
         role: NotificationRole.MANAGER,
         createdBy: session.name,
-        slug: slug,
+        slug: createResult.slug!,
         notificationSource: NotificationSource.EMPLOYEE
     }
     

@@ -1,7 +1,7 @@
 "use server";
 
 import { ProjectsRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 
 export type Project = {
   id?: string;
@@ -16,7 +16,8 @@ export type Project = {
 };
 
 export const viewProjects = async () => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   if (!session) {
     return { success: false, error: "User not authenticated.", projects: [] };
   }
@@ -30,7 +31,8 @@ export const viewProjects = async () => {
 };
 
 export const getProjectBySlug = async (slug: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
   if (!session) {
     return { success: false, error: "User not authenticated.", project: null };
   }

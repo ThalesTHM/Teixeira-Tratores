@@ -55,55 +55,42 @@ export async function GET() {
       let updateQueued = false;
       const encoder = new TextEncoder();
 
-      const processUpdate = async () => {
-        if (!isActive || updateInProgress) {
-          updateQueued = true;
-          return;
-        }
+      // Initialize repositories
+      const billsToPayRepository = new BillsToPayRepository();
+      const billsToReceiveRepository = new BillsToReceiveRepository();
+      const projectsRepository = new ProjectsRepository();
+      const clientsRepository = new ClientsRepository();
+      const suppliersRepository = new SuppliersRepository();
+      const usersRepository = new UsersRepository();
 
-        updateInProgress = true;
-        updateQueued = false;
+      // Store current data
+      let billsToPayData: any[] = [];
+      let billsToReceiveData: any[] = [];
+      let projectsData: any[] = [];
+      let clientsData: any[] = [];
+      let suppliersData: any[] = [];
+      let employeesData: any[] = [];
+
+      const calculateAndSendSummary = () => {
+        if (!isActive) return;
 
         try {
-          const billsToPayRepository = new BillsToPayRepository();
-          const billsToReceiveRepository = new BillsToReceiveRepository();
-          const projectsRepository = new ProjectsRepository();
-          const clientsRepository = new ClientsRepository();
-          const suppliersRepository = new SuppliersRepository();
-          const usersRepository = new UsersRepository();
-
-          const [
-            billsToPayArr, 
-            billsToReceiveArr, 
-            projectsArr, 
-            clientsArr, 
-            suppliersArr, 
-            employeesArr
-          ] = await Promise.all([
-            billsToPayRepository.findAll(),
-            billsToReceiveRepository.findAll(),
-            projectsRepository.findAll(),
-            clientsRepository.findAll(),
-            suppliersRepository.findAll(),
-            usersRepository.findAll(),
-          ]);
-
-          const totalPay = billsToPayArr.reduce((sum, bill) => sum + (bill.price || 0), 0);
-          const totalReceive = billsToReceiveArr.reduce((sum, bill) => sum + (bill.price || 0), 0);
-          const projectPricing = projectsArr.reduce((sum, project) => 
+          const totalPay = billsToPayData.reduce((sum, bill) => sum + (bill.price || 0), 0);
+          const totalReceive = billsToReceiveData.reduce((sum, bill) => sum + (bill.price || 0), 0);
+          const projectPricing = projectsData.reduce((sum, project) => 
             sum + (project.expectedBudget || 0), 0);
 
           const data: FinanceSummary = {
-            billsToPay: billsToPayArr.length,
-            billsToReceive: billsToReceiveArr.length,
+            billsToPay: billsToPayData.length,
+            billsToReceive: billsToReceiveData.length,
             totalPay,
             totalReceive,
             projectPricing,
             grossProfit: totalReceive - totalPay,
-            clients: clientsArr.length,
-            projects: projectsArr.length,
-            suppliers: suppliersArr.length,
-            employees: employeesArr.length,
+            clients: clientsData.length,
+            projects: projectsData.length,
+            suppliers: suppliersData.length,
+            employees: employeesData.length,
           };
 
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
@@ -112,30 +99,60 @@ export async function GET() {
             controller.error(error);
             isActive = false;
           }
-        } finally {
-          updateInProgress = false;
-          if (updateQueued) {
-            setTimeout(processUpdate, 0);
-          }
         }
       };
 
-      const debouncedUpdate = (() => {
-        let timeoutId: NodeJS.Timeout | undefined;
-        return () => {
-          if (timeoutId) clearTimeout(timeoutId);
-          timeoutId = setTimeout(processUpdate, 500);
-        };
-      })();
+      // Set up real-time subscriptions - INSTANT UPDATES
+      const unsubscribeBillsToPay = billsToPayRepository.subscribeToAll((data) => {
+        if (isActive) {
+          billsToPayData = data;
+          calculateAndSendSummary();
+        }
+      });
 
-      processUpdate();
+      const unsubscribeBillsToReceive = billsToReceiveRepository.subscribeToAll((data) => {
+        if (isActive) {
+          billsToReceiveData = data;
+          calculateAndSendSummary();
+        }
+      });
 
-      // Poll for updates every 5 seconds
-      const interval = setInterval(debouncedUpdate, 5000);
+      const unsubscribeProjects = projectsRepository.subscribeToAll((data) => {
+        if (isActive) {
+          projectsData = data;
+          calculateAndSendSummary();
+        }
+      });
+
+      const unsubscribeClients = clientsRepository.subscribeToAll((data) => {
+        if (isActive) {
+          clientsData = data;
+          calculateAndSendSummary();
+        }
+      });
+
+      const unsubscribeSuppliers = suppliersRepository.subscribeToAll((data) => {
+        if (isActive) {
+          suppliersData = data;
+          calculateAndSendSummary();
+        }
+      });
+
+      const unsubscribeEmployees = usersRepository.subscribeToAll((data) => {
+        if (isActive) {
+          employeesData = data;
+          calculateAndSendSummary();
+        }
+      });
 
       return () => {
         isActive = false;
-        clearInterval(interval);
+        unsubscribeBillsToPay();
+        unsubscribeBillsToReceive();
+        unsubscribeProjects();
+        unsubscribeClients();
+        unsubscribeSuppliers();
+        unsubscribeEmployees();
       };
     }
   });

@@ -2,7 +2,7 @@
 
 import { NotificationsRepository } from "@/database/repositories/Repositories";
 import { adminFirestore } from "@/firebase/firebase-admin";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { FieldValue } from "firebase-admin/firestore";
 
 export enum NotificationPriority {
@@ -61,8 +61,10 @@ const isAlreadyRead = async (notificationId: string, userId: string): Promise<bo
 }
 
 export class NotificationsService {
+    private static sessionService = new SessionService();
+    
     static async getAllNotifications(): Promise<GetAllNotificationsResult> {
-        const session = await getUserFromSession();
+        const session = await NotificationsService.sessionService.getUserFromSession();
 
         if (!session) {
             return { success: false, error: 'User not authenticated' };
@@ -93,7 +95,7 @@ export class NotificationsService {
     }
 
     static async markNotificationAsRead(notificationId: string): Promise<MarkNotificationAsReadResult> {
-        const session = await getUserFromSession();
+        const session = await NotificationsService.sessionService.getUserFromSession();
         
         if (!session) {
             return { success: false, error: 'User not authenticated' };
@@ -119,7 +121,7 @@ export class NotificationsService {
     }
 
     static async markNotificationsAsSoftRead(): Promise<MarkNotificationAsReadResult> {
-        const session = await getUserFromSession();
+        const session = await NotificationsService.sessionService.getUserFromSession();
         
         if (!session) {
             return { success: false, error: 'User not authenticated' };

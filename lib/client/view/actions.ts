@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { ClientsRepository } from "@/database/repositories/Repositories";
 
 type Client = {
@@ -15,7 +15,8 @@ type Client = {
 };
 
 export const viewClients = async (): Promise<{ success: boolean; error: string; clients: Client[] }> => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
     if (!session) {
         return {
             success: false,
@@ -67,7 +68,8 @@ export const getClientBySlug = async (slug: string) => {
 };
 
 export const getClientById = async (id: string): Promise<{ success: boolean; error: string; client: Client | null }> => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
     if (!session) {
         return {
             success: false,

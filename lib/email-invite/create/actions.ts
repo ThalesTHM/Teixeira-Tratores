@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { z } from "zod";
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { employeeFormSchema } from "./validation";
@@ -13,7 +13,8 @@ function generateSlug() {
 }
 
 export const createEmployee = async (formData: FormData) => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {

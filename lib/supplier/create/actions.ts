@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { supplierFormSchema } from "./validation";
 import { z } from "zod";
 import { SuppliersRepository } from "@/database/repositories/Repositories";
@@ -20,7 +20,8 @@ function generateSlug(name: string) {
 }
 
 export const createSupplier = async (formData: FormData) => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {

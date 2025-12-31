@@ -37,7 +37,7 @@ export class Repository {
             const createdData = { 
                 ...data, 
                 createdAt: now,
-                updatedAt: now,
+                updatedAt: null,
                 deletedAt: null
             };
 

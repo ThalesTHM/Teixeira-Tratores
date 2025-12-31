@@ -1,7 +1,7 @@
 "use server";
 
 import { adminFirestore } from "@/firebase/firebase-admin";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 
 type Supplier = {
   id: string;
@@ -16,7 +16,8 @@ type Supplier = {
 };
 
 export const viewSuppliers = async (): Promise<{ success: boolean; error: string; suppliers: Supplier[] }> => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: 'User not authenticated', suppliers: [] };
@@ -52,7 +53,8 @@ export const viewSuppliers = async (): Promise<{ success: boolean; error: string
 };
 
 export const getSupplierBySlug = async (slug: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: 'User not authenticated', supplier: null };
@@ -71,7 +73,8 @@ export const getSupplierBySlug = async (slug: string) => {
 };
 
 export const getSupplierById = async (supplierId: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: 'User not authenticated' };

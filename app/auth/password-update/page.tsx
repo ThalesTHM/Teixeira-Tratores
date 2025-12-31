@@ -6,7 +6,7 @@ import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
 import { passwordRecoveryFormSchema } from '@/lib/validation';
 import { toast } from 'sonner';
-import { changePassword } from '@/lib/auth';
+import { changePassword } from '@/lib/password-recovery/actions';
 import Link from 'next/link';
 
 const PasswordUpdate = () => {

@@ -1,12 +1,13 @@
 "use server";
 
 import { adminFirestore } from "@/firebase/firebase-admin";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return new Response("Unauthorized", { status: 401 });

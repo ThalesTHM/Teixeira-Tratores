@@ -1,10 +1,11 @@
 "use server";
 
-import { getUserFromSession } from '@/lib/auth';
+import { SessionService } from '@/services/session/SessionService';
 import { BillsToPayRepository } from '@/database/repositories/Repositories';
 
 export const getBillsToPayBySlug = async (slug: string) => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: 'User not authenticated' };
@@ -25,7 +26,8 @@ export const getBillsToPayBySlug = async (slug: string) => {
 };
 
 export const viewBillsToPay = async () => {
-  const session = await getUserFromSession();
+  const sessionService = new SessionService();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return { success: false, error: 'User not authenticated' };

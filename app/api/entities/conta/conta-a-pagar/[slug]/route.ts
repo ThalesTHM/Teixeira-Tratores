@@ -1,11 +1,13 @@
 "use server";
 
 import { BillsToPayRepository } from "@/database/repositories/Repositories";
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { NextRequest } from "next/server";
 
+const sessionService = new SessionService();
+
 export async function GET(req: NextRequest, {params}: { params: { slug: string } }) {
-  const session = await getUserFromSession();
+  const session = await sessionService.getUserFromSession();
 
   if (!session) {
     return new Response("Unauthorized", { status: 401 });

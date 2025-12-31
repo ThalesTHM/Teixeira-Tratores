@@ -1,6 +1,6 @@
 "use server";
 
-import { getUserFromSession } from "@/lib/auth";
+import { SessionService } from "@/services/session/SessionService";
 import { clientFormSchema } from "./validation";
 import { z } from "zod";
 import { ClientsRepository } from "@/database/repositories/Repositories";
@@ -15,7 +15,8 @@ function generateSlug() {
 }
 
 export const createClient = async (formData: FormData) => {
-    const session = await getUserFromSession();
+    const sessionService = new SessionService();
+    const session = await sessionService.getUserFromSession();
 
     if (!session) {
         return {
