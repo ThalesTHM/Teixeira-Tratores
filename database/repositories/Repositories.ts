@@ -117,3 +117,20 @@ export class PasswordRecoveryRequestsRepository extends Repository {
         }
     }
 }
+
+export class ActionsHistoryRepository extends Repository {
+    private isLoggingEnabled: boolean;
+
+    constructor() {
+        super('actionsHistory');
+        this.isLoggingEnabled = process.env.NEXT_PUBLIC_ENABLE_ACTION_HISTORY_LOGGING !== 'false';
+    }
+
+    async create(data: Record<string, any>) {
+        // Only create log if logging is enabled
+        if (!this.isLoggingEnabled) {
+            return;
+        }
+        return super.create(data);
+    }
+}

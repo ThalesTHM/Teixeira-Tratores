@@ -1,17 +1,6 @@
 import { adminFirestore } from "@/firebase/firebase-admin";
-import { RepositoryHistoryService } from "@/services/repository-history/RepositoryHistoryService";
 
-export class Repository {
-    private historyService: RepositoryHistoryService = new RepositoryHistoryService();
-
-    constructor(
-        private collectionName: string,
-    ) {}
-
-    getCollectionName(): string {
-        return this.collectionName;
-    }
-
+export class RepositoryHistoryRepository {
     // Convert Firestore Timestamps to JavaScript Date objects
     private convertTimestamps(data: any): any {
         if (!data || typeof data !== 'object') return data;
@@ -50,26 +39,16 @@ export class Repository {
                 deletedAt: null
             };
 
-            const docRef = await adminFirestore.collection(this.collectionName).add(createdData);
-            const result = { id: docRef.id, ...createdData };
-            
-            await this.historyService.createCreateRecord(docRef.id, createdData, this.collectionName);
-
-            return result;
+            const docRef = await adminFirestore.collection('repositoriesHistory').add(createdData);
+            return { id: docRef.id, ...createdData };
         } catch (error) {
-            await this.historyService.createErrorReportRecord(null, {
-                method: 'create',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                data
-            }, this.collectionName);
             throw new Error('Error creating record: ' + error);
         }
     }
 
     // Subscribe to all non-deleted documents
     subscribeToAll(callback: (data: any[]) => void): () => void {
-        const unsubscribe = adminFirestore.collection(this.collectionName)
+        const unsubscribe = adminFirestore.collection('repositoriesHistory')
             .onSnapshot(snapshot => {
                 const data = snapshot.docs
                     .map(doc => this.convertTimestamps({ id: doc.id, ...doc.data() }))
@@ -81,7 +60,7 @@ export class Repository {
 
     // Subscribe to a specific document by slug
     subscribeBySlug(slug: string, callback: (data: any | null) => void): () => void {
-        const unsubscribe = adminFirestore.collection(this.collectionName)
+        const unsubscribe = adminFirestore.collection('repositoriesHistory')
             .where('slug', '==', slug)
             .onSnapshot(snapshot => {
                 const validDocs = snapshot.docs
@@ -99,7 +78,7 @@ export class Repository {
         orderBy?: Array<{ field: string; direction: 'asc' | 'desc' }>,
         callback?: (data: any[]) => void
     ): () => void {
-        let query: any = adminFirestore.collection(this.collectionName);
+        let query: any = adminFirestore.collection('repositoriesHistory');
         
         // Apply where conditions
         whereConditions.forEach(condition => {
@@ -125,7 +104,7 @@ export class Repository {
 
     async findById(id: string): Promise<any | null> {
         try {
-            const doc = await adminFirestore.collection(this.collectionName).doc(id).get();
+            const doc = await adminFirestore.collection('repositoriesHistory').doc(id).get();
             if (doc.exists) {
                 const data = doc.data();
                 // Only return if not soft deleted (deletedAt is null or doesn't exist)
@@ -135,97 +114,40 @@ export class Repository {
             }
             return null;
         } catch (error) {
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'findById',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id
-            }, this.collectionName);
             throw new Error('Error finding record: ' + error);
         }
     }
 
     async update(id: string, data: any): Promise<any> {
-        let historyRecordId: string | null = null;
-        
         try {
-            const historyRecord = await this.historyService.createUpdateRecord(id, data, this);
-            historyRecordId = historyRecord?.id;
-            
             const updateData = {
                 ...data,
                 updatedAt: new Date()
             };
- 
-            await adminFirestore.collection(this.collectionName).doc(id).update(updateData);
-            
+            await adminFirestore.collection('repositoriesHistory').doc(id).update(updateData);
             return { id, ...updateData };
         } catch (error) {
-            // Rollback history if it was created
-            if (historyRecordId) {
-                await this.historyService.rollbackRecord(historyRecordId);
-            }
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'update',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id,
-                data
-            }, this.collectionName);
             throw new Error('Error updating record: ' + error);
         }
     }
 
     async delete(id: string): Promise<void> {
-        let historyRecordId: string | null = null;
-        const deletionTime = new Date();
-        
         try {
-            const historyRecord = await this.historyService.createSoftDeleteRecord(id, this, deletionTime);
-            historyRecordId = historyRecord?.id;
-            
             // Soft delete: set deletedAt timestamp instead of actually deleting
-            await adminFirestore.collection(this.collectionName).doc(id).update({
-                deletedAt: deletionTime,
-                updatedAt: deletionTime
+            await adminFirestore.collection('repositoriesHistory').doc(id).update({
+                deletedAt: new Date(),
+                updatedAt: new Date()
             });
-
         } catch (error) {
-            // Rollback history if it was created
-            if (historyRecordId) {
-                await this.historyService.rollbackRecord(historyRecordId);
-            }
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'delete',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id
-            }, this.collectionName);
             throw new Error('Error deleting record: ' + error);
         }
     }
 
     async hardDelete(id: string): Promise<void> {
-        let historyRecordId: string | null = null;
-        
         try {
-            // Create history record BEFORE deletion so we can still fetch the data
-            const historyRecord = await this.historyService.createHardDeleteRecord(id, this);
-            historyRecordId = historyRecord?.id;
-            
             // Actual deletion from database
-            await adminFirestore.collection(this.collectionName).doc(id).delete();
+            await adminFirestore.collection('repositoriesHistory').doc(id).delete();
         } catch (error) {
-            // Rollback history if it was created
-            if (historyRecordId) {
-                await this.historyService.rollbackRecord(historyRecordId);
-            }
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'hardDelete',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id
-            }, this.collectionName);
             throw new Error('Error hard deleting record: ' + error);
         }
     }
@@ -233,16 +155,11 @@ export class Repository {
     async findAll(): Promise<any[]> {
         try {
             // Get all documents and filter out soft deleted ones
-            const snapshot = await adminFirestore.collection(this.collectionName).get();
+            const snapshot = await adminFirestore.collection('repositoriesHistory').get();
             return snapshot.docs
                 .map(doc => this.convertTimestamps({ id: doc.id, ...doc.data() }))
                 .filter((doc: any) => doc.deletedAt === null || doc.deletedAt === undefined);
         } catch (error) {
-            await this.historyService.createErrorReportRecord(null, {
-                method: 'findAll',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error)
-            }, this.collectionName);
             throw new Error('Error retrieving records: ' + error);
         }
     }
@@ -250,7 +167,7 @@ export class Repository {
     async findBySlug(slug: string): Promise<any | null> {
         try {
             // Get all documents with matching slug and filter out soft deleted ones
-            const snapshot = await adminFirestore.collection(this.collectionName)
+            const snapshot = await adminFirestore.collection('repositoriesHistory')
                 .where('slug', '==', slug)
                 .get();
             
@@ -263,12 +180,6 @@ export class Repository {
             }
             return null;
         } catch (error) {
-            await this.historyService.createErrorReportRecord(null, {
-                method: 'findBySlug',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                slug
-            }, this.collectionName);
             throw new Error('Error finding record by slug: ' + error);
         }
     }
@@ -276,49 +187,26 @@ export class Repository {
     async findByField(field: string, value: any): Promise<any[]> {
         try {
             // Get all documents with matching field and filter out soft deleted ones
-            const snapshot = await adminFirestore.collection(this.collectionName)
+            const snapshot = await adminFirestore.collection('repositoriesHistory')
                 .where(field, '==', value)
                 .get();
             return snapshot.docs
                 .map(doc => this.convertTimestamps({ id: doc.id, ...doc.data() }))
                 .filter((doc: any) => doc.deletedAt === null || doc.deletedAt === undefined);
         } catch (error) {
-            await this.historyService.createErrorReportRecord(null, {
-                method: 'findByField',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                field,
-                value
-            }, this.collectionName);
             throw new Error('Error finding records by field: ' + error);
         }
     }
 
     async restore(id: string): Promise<any> {
-        let historyRecordId: string | null = null;
-        
         try {
-            const historyRecord = await this.historyService.createRestoreRecord(id, this);
-            historyRecordId = historyRecord?.id;
-            
             const updateData = {
                 deletedAt: null,
                 updatedAt: new Date()
             };
-            await adminFirestore.collection(this.collectionName).doc(id).update(updateData);
-
+            await adminFirestore.collection('repositoriesHistory').doc(id).update(updateData);
             return { id, ...updateData };
         } catch (error) {
-            // Rollback history if it was created
-            if (historyRecordId) {
-                await this.historyService.rollbackRecord(historyRecordId);
-            }
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'restore',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id
-            }, this.collectionName);
             throw new Error('Error restoring record: ' + error);
         }
     }
@@ -326,23 +214,18 @@ export class Repository {
     async findDeleted(): Promise<any[]> {
         try {
             // Get all documents and filter to show only soft deleted ones
-            const snapshot = await adminFirestore.collection(this.collectionName).get();
+            const snapshot = await adminFirestore.collection('repositoriesHistory').get();
             return snapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .filter((doc: any) => doc.deletedAt !== null && doc.deletedAt !== undefined);
         } catch (error) {
-            await this.historyService.createErrorReportRecord(null, {
-                method: 'findDeleted',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error)
-            }, this.collectionName);
             throw new Error('Error retrieving deleted records: ' + error);
         }
     }
 
     async findByIdDeleted(id: string): Promise<any | null> {
         try {
-            const doc = await adminFirestore.collection(this.collectionName).doc(id).get();  
+            const doc = await adminFirestore.collection('repositoriesHistory').doc(id).get();  
             if (doc.exists) {
                 const data = doc.data();
                 // Only return if soft deleted (deletedAt exists and is not null)
@@ -352,12 +235,6 @@ export class Repository {
             }
             return null;
         } catch (error) {
-            await this.historyService.createErrorReportRecord(id, {
-                method: 'findByIdDeleted',
-                collection: this.collectionName,
-                error: error instanceof Error ? error.message : String(error),
-                id
-            }, this.collectionName);
             throw new Error('Error finding deleted record: ' + error);
         }
     }

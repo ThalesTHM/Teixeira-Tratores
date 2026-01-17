@@ -3,15 +3,27 @@
 import { SessionService } from "@/services/session/SessionService";
 import { billsToPayFormSchema } from "./validation";
 import { z } from "zod";
-import { BillsToPayRepository } from "@/database/repositories/Repositories";
+import { ActionsHistoryRepository, BillsToPayRepository } from "@/database/repositories/Repositories";
 import { nanoid } from "nanoid";
 import { NotificationRole, NotificationSource, NotificationsService } from "@/services/notifications/NotificationsService";
+
+const actionsHistoryRepository = new ActionsHistoryRepository();
 
 export const createBillToPay = async (formData: FormData) => {
     const sessionService = new SessionService();
     const session = await sessionService.getUserFromSession();
 
     if (!session) {
+        await actionsHistoryRepository.create({
+            action: 'Falha na Criação de Conta a Pagar',
+            details: `Tentativa de criar conta a pagar sem autenticação.`,
+            author: null,
+            timestamp: new Date(),
+            parameters: {
+                authenticated: false
+            }
+        });
+
         return {
             success: false,
             error: "User Not Authenticated",
@@ -37,6 +49,17 @@ export const createBillToPay = async (formData: FormData) => {
         if (error instanceof z.ZodError) {
             const fieldErrors = error.flatten().fieldErrors;
 
+            await actionsHistoryRepository.create({
+                action: 'Falha na Criação de Conta a Pagar',
+                details: `Falha na validação ao criar conta a pagar "${billData.name}".`,
+                author: session,
+                timestamp: new Date(),
+                parameters: {
+                    ...billData,
+                    validationErrors: fieldErrors
+                }
+            });
+
             return {
                 success: false,
                 error: fieldErrors
@@ -48,11 +71,30 @@ export const createBillToPay = async (formData: FormData) => {
         const billsToPayRepository = new BillsToPayRepository();
         await billsToPayRepository.create(billData);
     } catch (error) {
+        await actionsHistoryRepository.create({
+            action: 'Falha na Criação de Conta a Pagar',
+            details: `Erro ao criar conta a pagar "${billData.name}". Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
+            author: session,
+            timestamp: new Date(),
+            parameters: {
+                ...billData,
+                error: error instanceof Error ? error.message : "Erro desconhecido"
+            }
+        });
+
         return {
             success: false,
             error:  "Error Creating Bill To Pay"
         }
     }
+
+    await actionsHistoryRepository.create({
+        action: 'Conta a Pagar Criada',
+        details: `Conta a pagar "${billData.name}" foi criada.`,
+        author: session,
+        timestamp: new Date(),
+        parameters: billData
+    });
 
     const notification = {
         message: `Conta a Pagar "${billData.name}" Foi Criada.`,
@@ -66,6 +108,18 @@ export const createBillToPay = async (formData: FormData) => {
 
     if (!notificationRes.success) {
         console.error("Error creating notification:", notificationRes.error);
+        
+        await actionsHistoryRepository.create({
+            action: 'Falha ao Criar Notificação',
+            details: `Erro ao criar notificação para conta a pagar "${billData.name}". Erro: ${notificationRes.error}`,
+            author: session,
+            timestamp: new Date(),
+            parameters: {
+                ...billData,
+                error: notificationRes.error
+            }
+        });
+
         return {
             success: false,
             error: "Error creating notification"
