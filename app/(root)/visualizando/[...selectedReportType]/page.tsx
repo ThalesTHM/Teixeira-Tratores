@@ -5,7 +5,6 @@ import BillsToPayForm from '@/components/view/Bill/Pay/BillsToPayForm';
 import BillsToRecieveForm from '@/components/view/Bill/Recieve/BillsToRecieveForm';
 import React from 'react';
 import EmployeeForm from '@/components/view/Employee/EmployeeForm';
-import EmailInviteForm from '@/components/view/EmailInvite/EmailInviteForm';
 
 const page = async ({ params }: { params: Promise<{ selectedReportType: Array<string> }>}) => {
   const { selectedReportType } = await params;
@@ -52,9 +51,11 @@ const page = async ({ params }: { params: Promise<{ selectedReportType: Array<st
         content = <div>Slug da conta não informado.</div>;
         break;
       }
+
     case 'convite':
-      content = <EmailInviteForm slug={selectedReportType[1] || ""} />;
+      content = <EmployeeForm slug={selectedReportType[1]} />;
       break;
+
     default:
       content = <div>Tipo de visualização desconhecido.</div>;
   }

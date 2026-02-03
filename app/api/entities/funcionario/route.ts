@@ -4,6 +4,7 @@ import { adminFirestore } from "@/firebase/firebase-admin";
 import { NotificationRole } from "@/services/notifications/NotificationsService";
 import { SessionService } from "@/services/session/SessionService";
 import { NextRequest } from "next/server";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const sessionService = new SessionService();
 
@@ -40,7 +41,8 @@ export async function GET(req: NextRequest) {
         ...docData
       };
     });
-    const payload = `data: ${JSON.stringify(users)}\n\n`;
+    const serializedUsers = serializeFirestoreData(users);
+    const payload = `data: ${JSON.stringify(serializedUsers)}\n\n`;
     writer.write(encoder.encode(payload));
   });
 

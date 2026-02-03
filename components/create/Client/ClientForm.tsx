@@ -67,9 +67,9 @@ const ClientForm = () => {
   })
 
   return (
-    <div className='flex items-center justify-center h-full w-full'>
-      <div className='p-4 mt-5 w-1/3 h-1/2'>
-        <form action={formAction} className='flex flex-col gap-5'>
+    <div className='flex items-center justify-center w-full p-4 sm:p-6 md:p-8'>
+      <div className='w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl'>
+        <form action={formAction} className='flex flex-col gap-4 sm:gap-5'>
           <div>
             <Label htmlFor="name" className='forms-label'>Nome</Label>
             <Input

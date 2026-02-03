@@ -2,6 +2,7 @@
 
 import { SessionService } from "@/services/session/SessionService";
 import { ActionsHistoryRepository, ClientsRepository } from "@/database/repositories/Repositories";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -52,7 +53,7 @@ export const viewClients = async (): Promise<{ success: boolean; error: string; 
 
         return {
             success: true,
-            clients,
+            clients: serializeFirestoreData(clients),
             error: ""
         };
     } catch (error) {
@@ -133,7 +134,7 @@ export const getClientBySlug = async (slug: string) => {
 
         return {
             success: true,
-            client,
+            client: serializeFirestoreData(client),
             error: ''
         };
     } catch (error) {
@@ -212,7 +213,7 @@ export const getClientById = async (id: string): Promise<{ success: boolean; err
 
         return {
             success: true,
-            client,
+            client: serializeFirestoreData(client),
             error: ""
         };
     } catch (error) {

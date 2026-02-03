@@ -23,9 +23,17 @@ export class Repository {
         
         for (const field of timestampFields) {
             if (converted[field]) {
-                if (typeof converted[field] === 'object' && converted[field].toDate) {
-                    // Convert Firestore Timestamp to JavaScript Date
-                    converted[field] = converted[field].toDate();
+                if (typeof converted[field] === 'object') {
+                    // Check if it has toDate method (Firestore Timestamp)
+                    if (converted[field].toDate && typeof converted[field].toDate === 'function') {
+                        converted[field] = converted[field].toDate();
+                    }
+                    // Check if it has _seconds and _nanoseconds (Firestore Timestamp structure)
+                    else if ('_seconds' in converted[field] && '_nanoseconds' in converted[field]) {
+                        const seconds = typeof converted[field]._seconds === 'number' ? converted[field]._seconds : 0;
+                        const nanoseconds = typeof converted[field]._nanoseconds === 'number' ? converted[field]._nanoseconds : 0;
+                        converted[field] = new Date(seconds * 1000 + nanoseconds / 1000000);
+                    }
                 } else if (typeof converted[field] === 'number') {
                     // Convert milliseconds to Date
                     converted[field] = new Date(converted[field]);

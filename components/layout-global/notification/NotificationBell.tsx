@@ -74,7 +74,7 @@ const NotificationBell = () => {
       {notificationMenu && (
         <div
           ref={menuRef}
-          className="absolute top-14 w-80 right-[-80px]"
+          className="absolute top-14 w-[calc(100vw-2rem)] sm:w-96 right-0 sm:right-[-80px] max-w-md"
         >
           <NotificationsMenu notifications={notifications} />
         </div>
