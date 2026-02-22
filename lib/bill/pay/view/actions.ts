@@ -2,6 +2,7 @@
 
 import { SessionService } from '@/services/session/SessionService';
 import { ActionsHistoryRepository, BillsToPayRepository } from '@/database/repositories/Repositories';
+import { serializeFirestoreData } from '@/lib/utils';
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -54,7 +55,7 @@ export const getBillsToPayBySlug = async (slug: string) => {
       }
     });
 
-    return { success: true, bill, error: '' };
+    return { success: true, bill: serializeFirestoreData(bill), error: '' };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Conta a Pagar',
@@ -107,7 +108,7 @@ export const viewBillsToPay = async () => {
       return { success: true, data: null, error: '' };
     }
 
-    return { success: true, bills, error: '' };
+    return { success: true, bills: serializeFirestoreData(bills), error: '' };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Listagem de Contas a Pagar',

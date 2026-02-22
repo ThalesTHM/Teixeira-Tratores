@@ -11,7 +11,7 @@ import { billsToPayFormSchema, supplierFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { viewSuppliers } from '@/lib/supplier/view/actions';
+// fetch suppliers from the SSE API route instead of calling server actions from the client
 import { createBillToPay } from '@/lib/bill/pay/create/actions';
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
 
@@ -54,18 +54,32 @@ const BillsToPayForm = () => {
 
   useEffect(() => {
     setIsLoaded(false);
-    const fetchSuppliers = async () => {
-      const res = await viewSuppliers();
-      if (res.success && Array.isArray(res.suppliers)) {
-        setSuppliers(res.suppliers);
+    // Use EventSource for live updates
+    const es = new EventSource('/api/entities/fornecedor');
+    const onMessage = (e: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(e.data);
+        const normalized = Array.isArray(parsed)
+          ? parsed.map((s: any) => ({ ...s, createdAt: s.createdAt ? Date.parse(s.createdAt) : undefined }))
+          : [];
+        setSuppliers(normalized);
         setLoadingError(false);
-      } else {
+        setIsLoaded(true);
+      } catch (_err) {
         setSuppliers([]);
         setLoadingError(true);
+        setIsLoaded(true);
       }
+    };
+    const onError = (_err: any) => {
+      setLoadingError(true);
       setIsLoaded(true);
     };
-    fetchSuppliers();
+    es.addEventListener('message', onMessage as EventListener);
+    es.addEventListener('error', onError as EventListener);
+    return () => {
+      try { es.close(); } catch (_) {}
+    };
   }, []);
   
 
@@ -129,9 +143,9 @@ const BillsToPayForm = () => {
   })
 
   return (
-    <div className='flex items-center justify-center h-full w-full'>
-      <div className='p-4 mt-5 w-1/3 h-1/2'>
-        <form action={formAction} className='flex flex-col gap-5'>
+    <div className='flex items-center justify-center w-full p-4 sm:p-6 md:p-8'>
+      <div className='w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl'>
+        <form action={formAction} className='flex flex-col gap-4 sm:gap-5'>
           <div>
             <Label htmlFor="name" className='forms-label'>Nome</Label>
             <Input
@@ -241,6 +255,7 @@ const BillsToPayForm = () => {
               onCheckedChange={(check) => setHaveSupplier(check)}
             />
           </div>
+ 
 
           {
             haveSupplier && (

@@ -29,6 +29,32 @@ export class RepositoryHistoryRepository {
         return converted;
     }
 
+    async bulkCreate(data: Array<any>): Promise<any[]> {
+        try {
+            const batch = adminFirestore.batch();
+            const collectionRef = adminFirestore.collection('repositoriesHistory');
+            const createdDocs: any[] = [];
+            
+            data.forEach(item => {
+                const docRef = collectionRef.doc();
+                const now = new Date();
+                const createdData = {
+                    ...item,
+                    createdAt: now,
+                    updatedAt: null,
+                    deletedAt: null
+                };
+                batch.set(docRef, createdData);
+                createdDocs.push({ id: docRef.id, ...createdData });
+            });
+
+            await batch.commit();
+            return createdDocs;
+        } catch (error) {
+            throw new Error('Error bulk creating records: ' + error);
+        }
+    }
+
     async create(data: any): Promise<any> {
         try {
             const now = new Date();

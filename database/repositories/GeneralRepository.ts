@@ -23,9 +23,17 @@ export class Repository {
         
         for (const field of timestampFields) {
             if (converted[field]) {
-                if (typeof converted[field] === 'object' && converted[field].toDate) {
-                    // Convert Firestore Timestamp to JavaScript Date
-                    converted[field] = converted[field].toDate();
+                if (typeof converted[field] === 'object') {
+                    // Check if it has toDate method (Firestore Timestamp)
+                    if (converted[field].toDate && typeof converted[field].toDate === 'function') {
+                        converted[field] = converted[field].toDate();
+                    }
+                    // Check if it has _seconds and _nanoseconds (Firestore Timestamp structure)
+                    else if ('_seconds' in converted[field] && '_nanoseconds' in converted[field]) {
+                        const seconds = typeof converted[field]._seconds === 'number' ? converted[field]._seconds : 0;
+                        const nanoseconds = typeof converted[field]._nanoseconds === 'number' ? converted[field]._nanoseconds : 0;
+                        converted[field] = new Date(seconds * 1000 + nanoseconds / 1000000);
+                    }
                 } else if (typeof converted[field] === 'number') {
                     // Convert milliseconds to Date
                     converted[field] = new Date(converted[field]);
@@ -361,4 +369,89 @@ export class Repository {
             throw new Error('Error finding deleted record: ' + error);
         }
     }
+
+    async bulkFindByIds(ids: string[]): Promise<Map<string, any>> {
+        try {
+            const docRefs = ids.map(id => adminFirestore.collection(this.collectionName).doc(id));
+            const docs = await adminFirestore.getAll(...docRefs);
+            const result = new Map<string, any>();
+            for (const doc of docs) {
+                if (doc.exists) {
+                    result.set(doc.id, this.convertTimestamps({ id: doc.id, ...doc.data() }));
+                }
+            }
+            return result;
+        } catch (error) {
+            throw new Error('Error bulk finding records by ids: ' + error);
+        }
+    }
+
+    async bulkDelete(ids: string[]): Promise<void> {
+        const bulkWriter = adminFirestore.bulkWriter();
+        const deletionTime = new Date();
+        const historyRecordIds: string[] = [];
+        
+        try {
+            for (const id of ids) {
+                const docRef = adminFirestore.collection(this.collectionName).doc(id);
+                bulkWriter.update(docRef, {
+                    deletedAt: deletionTime,
+                    updatedAt: deletionTime
+                });
+            }
+            
+            await bulkWriter.close();
+        } catch (error) {
+            // Rollback all history records
+            for (const historyId of historyRecordIds) {
+                await this.historyService.rollbackRecord(historyId);
+            }
+            await this.historyService.createErrorReportRecord(null, {
+                method: 'bulkDelete',
+                collection: this.collectionName,
+                error: error instanceof Error ? error.message : String(error),
+                ids
+            }, this.collectionName);
+            throw new Error('Error bulk deleting records: ' + error);
+        }
+    }
+
+    async bulkUpdate(updates: Array<{ id: string; data: any }>): Promise<any[]> {
+        let historyRecordIds: string[] = [];
+
+        try {
+            const historyRecords = await this.historyService.bulkUpdateRecords(
+                this.collectionName,
+                this,
+                updates.map(({ id, data }) => ({ recordId: id, updatedData: data }))
+            );
+            historyRecordIds = (historyRecords ?? []).map((r: any) => r.id).filter(Boolean);
+
+            const bulkWriter = adminFirestore.bulkWriter();
+            const now = new Date();
+            const updatedItems: any[] = [];
+
+            for (const { id, data } of updates) {
+                const docRef = adminFirestore.collection(this.collectionName).doc(id);
+                const updateData = { ...data, updatedAt: now };
+                bulkWriter.update(docRef, updateData);
+                updatedItems.push({ id, ...updateData });
+            }
+
+            await bulkWriter.close();
+            return updatedItems;
+        } catch (error) {
+            for (const historyId of historyRecordIds) {
+                await this.historyService.rollbackRecord(historyId);
+            }
+            await this.historyService.createErrorReportRecord(null, {
+                method: 'bulkUpdate',
+                collection: this.collectionName,
+                error: error instanceof Error ? error.message : String(error),
+                ids: updates.map(u => u.id),
+            }, this.collectionName);
+            throw new Error('Error bulk updating records: ' + error);
+        }
+    }
+
 }

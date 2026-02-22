@@ -2,6 +2,7 @@
 
 import { ActionsHistoryRepository, BillsToReceiveRepository } from "@/database/repositories/Repositories";
 import { SessionService } from "@/services/session/SessionService";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -37,7 +38,7 @@ export const viewBillsToReceive = async () => {
       }
     });
 
-    return { success: true, bills };
+    return { success: true, bills: serializeFirestoreData(bills) };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Listagem de Contas a Receber',
@@ -102,7 +103,7 @@ export const getBillToReceiveBySlug = async (slug: string) => {
       }
     });
 
-    return { success: true, data: bill };
+    return { success: true, data: serializeFirestoreData(bill) };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Conta a Receber',

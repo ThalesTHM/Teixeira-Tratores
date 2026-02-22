@@ -3,6 +3,7 @@
 import { EmployeeService, Employee } from "@/services/employee/EmployeeService";
 import { SessionService } from "@/services/session/SessionService";
 import { ActionsHistoryRepository } from "@/database/repositories/Repositories";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -53,7 +54,7 @@ export async function viewEmployees(): Promise<{
     }
   });
 
-  return { success: true, employees: result.employees! };
+  return { success: true, employees: serializeFirestoreData(result.employees!) };
 }
 
 export async function getEmployeeBySlug(slug: string): Promise<{
@@ -106,5 +107,5 @@ export async function getEmployeeBySlug(slug: string): Promise<{
     }
   });
 
-  return { success: true, employee: result.employee!, error: "" };
+  return { success: true, employee: serializeFirestoreData(result.employee!), error: "" };
 }

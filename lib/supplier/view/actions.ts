@@ -3,6 +3,7 @@
 import { adminFirestore } from "@/firebase/firebase-admin";
 import { SessionService } from "@/services/session/SessionService";
 import { ActionsHistoryRepository } from "@/database/repositories/Repositories";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -135,7 +136,7 @@ export const getSupplierBySlug = async (slug: string) => {
       }
     });
 
-    return { success: true, error: '', supplier };
+    return { success: true, error: '', supplier: serializeFirestoreData(supplier) };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Fornecedor',
@@ -200,7 +201,7 @@ export const getSupplierById = async (supplierId: string) => {
       }
     });
 
-    return { success: true, supplier, error: '' };
+    return { success: true, supplier: serializeFirestoreData(supplier), error: '' };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Fornecedor',

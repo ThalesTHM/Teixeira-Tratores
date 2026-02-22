@@ -2,6 +2,7 @@
 
 import { ProjectsRepository, ActionsHistoryRepository } from "@/database/repositories/Repositories";
 import { SessionService } from "@/services/session/SessionService";
+import { serializeFirestoreData } from "@/lib/utils";
 
 const actionsHistoryRepository = new ActionsHistoryRepository();
 
@@ -47,7 +48,7 @@ export const viewProjects = async () => {
       }
     });
 
-    return { success: true, error: "", projects };
+    return { success: true, error: "", projects: serializeFirestoreData(projects) };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Projetos',
@@ -109,7 +110,7 @@ export const getProjectBySlug = async (slug: string) => {
       }
     });
     
-    return { success: true, error: "", project };
+    return { success: true, error: "", project: serializeFirestoreData(project) };
   } catch (error) {
     await actionsHistoryRepository.create({
       action: 'Falha na Visualização de Projeto',

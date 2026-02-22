@@ -21,3 +21,50 @@ export function generatePasswordRecoveryCode(): string {
 
   return code;
 }
+
+/**
+ * Converts Firestore Timestamp objects to ISO strings for serialization
+ * This is necessary when passing data from Server Components to Client Components
+ */
+export function serializeFirestoreData<T = any>(data: any): T {
+  if (data === null || data === undefined) return data;
+  if (typeof data !== 'object') return data;
+  
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(item => serializeFirestoreData(item)) as T;
+  }
+  
+  // Check if it's a Firestore Timestamp object first (before iterating)
+  if ('_seconds' in data && '_nanoseconds' in data) {
+    const seconds = typeof data._seconds === 'number' ? data._seconds : 0;
+    const nanoseconds = typeof data._nanoseconds === 'number' ? data._nanoseconds : 0;
+    const timestamp = new Date(seconds * 1000 + nanoseconds / 1000000);
+    return timestamp.toISOString() as T;
+  }
+  
+  // Check if it has a toDate method (Firestore Timestamp)
+  if (typeof (data as any).toDate === 'function') {
+    return (data as any).toDate().toISOString() as T;
+  }
+  
+  // Check if it's a Date object
+  if (data instanceof Date) {
+    return data.toISOString() as T;
+  }
+  
+  const serialized: any = {};
+  
+  for (const [key, value] of Object.entries(data)) {
+    if (value === null || value === undefined) {
+      serialized[key] = value;
+    } else if (typeof value === 'object') {
+      // Recursively serialize (this will handle nested timestamps, dates, arrays, and objects)
+      serialized[key] = serializeFirestoreData(value);
+    } else {
+      serialized[key] = value;
+    }
+  }
+  
+  return serialized as T;
+}

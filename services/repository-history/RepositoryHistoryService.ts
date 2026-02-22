@@ -18,6 +18,64 @@ export class RepositoryHistoryService {
         return this._sessionService;
     }
 
+    // bulk writer
+    async bulkUpdateRecords(collectionName: string, repository: Repository, data: Array<{ recordId: string, updatedData: any }>): Promise<any> {
+        if (!this.isLoggingEnabled || collectionName === 'actionsHistory') {
+            return null;
+        }
+
+        const session = await this.getSessionService().getUserFromSession();
+
+        const ids = data.map(item => item.recordId);
+        const beforeMap = await repository.bulkFindByIds(ids);
+
+        return this.repositoryHistoryRepository.bulkCreate(data.map(item => ({
+            recordId: item.recordId,
+            action: 'bulk-update',
+            source: collectionName,
+            author: session || "system",
+            timestamp: new Date(),
+            before: beforeMap.get(item.recordId) ?? null,
+            after: item.updatedData,
+        })));
+    }
+
+    async bulkCreateRecords(collectionName: string, data: Array<{ recordId: string, createdData: any }>): Promise<any> {
+        if (!this.isLoggingEnabled || collectionName === 'actionsHistory') {
+            return null;
+        }
+
+        const session = await this.getSessionService().getUserFromSession();
+
+        return this.repositoryHistoryRepository.bulkCreate(data.map(item => ({
+            recordId: item.recordId,
+            action: 'bulk-create',
+            source: collectionName,
+            before: null,
+            after: item.createdData,
+            author: session || "system",
+            timestamp: new Date(),
+        })));
+    }
+
+    async bulkRestoreRecords(collectionName: string, data: Array<{ recordId: string, before: any }>): Promise<any> {
+        if (!this.isLoggingEnabled || collectionName === 'actionsHistory') {
+            return null;
+        }
+
+        const session = await this.getSessionService().getUserFromSession();
+
+        return this.repositoryHistoryRepository.bulkCreate(data.map(item => ({
+            recordId: item.recordId,
+            action: 'bulk-restore',
+            source: collectionName,
+            author: session || "system",
+            timestamp: new Date(),
+            before: item.before,
+            after: { ...item.before, deletedAt: null },
+        })));
+    }
+
     async createCreateRecord(recordId: string, data: any, collectionName?: string): Promise<any> {
         // Skip logging if disabled or if it's actionsHistory collection
         if (!this.isLoggingEnabled || collectionName === 'actionsHistory') {

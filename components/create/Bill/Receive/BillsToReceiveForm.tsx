@@ -10,7 +10,7 @@ import { billsToRecieveFormSchema, projectFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { viewProjects } from '@/lib/project/view/actions';
+// fetch projects from SSE API route instead of calling server actions from the client
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
 import { createBillToRecieve } from '@/lib/bill/recieve/create/actions';
 
@@ -44,24 +44,31 @@ const BillsToRecieveForm = () => {
 
   useEffect(() => {
     setIsLoaded(false);
-    async function fetchProjects() {
-      const res = await viewProjects();
-      console.log(res.projects);
-      if (res.success && Array.isArray(res.projects)) {
-                setProjects(res.projects.map((p) => ({
-                  slug: p.slug,
-                  name: p.name,
-                  createdAt: p.createdAt
-                })));
+    // Use EventSource for live projects
+    const es = new EventSource('/api/entities/projeto');
+    const onMessage = (e: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(e.data);
+        const normalized = Array.isArray(parsed)
+          ? parsed.map((p: any) => ({ slug: p.slug, name: p.name, createdAt: p.createdAt ? Date.parse(p.createdAt) : undefined }))
+          : [];
+        setProjects(normalized);
         setLoadingError(false);
-      } else {
+        setIsLoaded(true);
+      } catch (_err) {
         setProjects([]);
         setLoadingError(true);
-        toast.error(res.error || "Erro ao buscar projetos.");
+        setIsLoaded(true);
+        toast.error('Erro ao buscar projetos.');
       }
+    };
+    const onError = (_err: any) => {
+      setLoadingError(true);
       setIsLoaded(true);
-    }
-    fetchProjects();
+    };
+    es.addEventListener('message', onMessage as EventListener);
+    es.addEventListener('error', onError as EventListener);
+    return () => { try { es.close(); } catch (_) {} };
   }, []);
   
 
@@ -123,9 +130,9 @@ const BillsToRecieveForm = () => {
   })
 
   return (
-    <div className='flex items-center justify-center h-full w-full'>
-      <div className='p-4 mt-5 w-1/3 h-1/2'>
-        <form action={formAction} className='flex flex-col gap-5'>
+    <div className='flex items-center justify-center w-full p-4 sm:p-6 md:p-8'>
+      <div className='w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl'>
+        <form action={formAction} className='flex flex-col gap-4 sm:gap-5'>
           <div>
             <Label htmlFor="name" className="forms-label">Nome da Conta</Label>
             <Input
@@ -183,6 +190,7 @@ const BillsToRecieveForm = () => {
                 </div>
               )
             }
+ 
           </div>
 
           <div>
