@@ -11,7 +11,7 @@ import { billsToPayFormSchema, supplierFormSchema } from '@/lib/validation';
 import React, { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { viewSuppliers } from '@/lib/supplier/view/actions';
+// fetch suppliers from the SSE API route instead of calling server actions from the client
 import { createBillToPay } from '@/lib/bill/pay/create/actions';
 import SelectSkeleton from '@/components/utils/SelectSkeleton';
 
@@ -54,18 +54,32 @@ const BillsToPayForm = () => {
 
   useEffect(() => {
     setIsLoaded(false);
-    const fetchSuppliers = async () => {
-      const res = await viewSuppliers();
-      if (res.success && Array.isArray(res.suppliers)) {
-        setSuppliers(res.suppliers);
+    // Use EventSource for live updates
+    const es = new EventSource('/api/entities/fornecedor');
+    const onMessage = (e: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(e.data);
+        const normalized = Array.isArray(parsed)
+          ? parsed.map((s: any) => ({ ...s, createdAt: s.createdAt ? Date.parse(s.createdAt) : undefined }))
+          : [];
+        setSuppliers(normalized);
         setLoadingError(false);
-      } else {
+        setIsLoaded(true);
+      } catch (_err) {
         setSuppliers([]);
         setLoadingError(true);
+        setIsLoaded(true);
       }
+    };
+    const onError = (_err: any) => {
+      setLoadingError(true);
       setIsLoaded(true);
     };
-    fetchSuppliers();
+    es.addEventListener('message', onMessage as EventListener);
+    es.addEventListener('error', onError as EventListener);
+    return () => {
+      try { es.close(); } catch (_) {}
+    };
   }, []);
   
 
@@ -241,6 +255,7 @@ const BillsToPayForm = () => {
               onCheckedChange={(check) => setHaveSupplier(check)}
             />
           </div>
+ 
 
           {
             haveSupplier && (

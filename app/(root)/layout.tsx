@@ -1,7 +1,6 @@
-import Navbar from "@/components/layout-global/Navbar";
+import NavbarClient from "@/components/layout-global/NavbarClient";
 import { SessionService } from "@/services/session/SessionService";
 import { redirect } from "next/navigation";
-import { toast } from "sonner";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const sessionService = new SessionService();
@@ -13,8 +12,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   
   return (
     <main>
-      <Navbar/>
+      <NavbarClient/>
       {children}
     </main>
   );
-  }
+}
