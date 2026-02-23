@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
 import { passwordRecoveryFormSchema } from '@/lib/validation';
@@ -11,6 +12,7 @@ import Link from 'next/link';
 
 const PasswordUpdate = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const year = new Date().getFullYear();
 
   const handlePasswordUpdate = async (prevState: any, formData: FormData) => {
     setErrors({});
@@ -54,91 +56,97 @@ const PasswordUpdate = () => {
   });
 
   return (
-    <div className="main-auth-form-container !h-screen">
-      <div className="auth-form-container">
-        <form action={formAction}>
-          <div>
-            <label htmlFor="code">Código</label>
-            <Input
-              id="code"
-              name="code"
-              placeholder="Código de recuperação"
-              required
-            />
-            {errors.code &&
-              errors.code.map((error: string, i: number) => (
-                <div key={i}>
-                  <p className="auth-form-error">{error}</p>
-                  <br />
-                </div>
-              ))}
-          </div>
-          <div>
-            <label htmlFor="email">Email</label>
-            <Input
-              id="email"
-              name="email"
-              placeholder="SeuEmail@site.com"
-              required
-              type="email"
-            />
-            {errors.email &&
-              errors.email.map((error: string, i: number) => (
-                <div key={i}>
-                  <p className="auth-form-error">{error}</p>
-                  <br />
-                </div>
-              ))}
-          </div>
-          <div>
-            <label htmlFor="newPassword">Nova Senha</label>
-            <Input
-              id="newPassword"
-              name="newPassword"
-              placeholder="Nova senha"
-              required
-              type="password"
-            />
-            {errors.newPassword &&
-              errors.newPassword.map((error: string, i: number) => (
-                <div key={i}>
-                  <p className="auth-form-error">{error}</p>
-                  <br />
-                </div>
-              ))}
-          </div>
-          <div>
-            <label htmlFor="newPasswordConfirmation">Confirme a Nova Senha</label>
-            <Input
-              id="newPasswordConfirmation"
-              name="newPasswordConfirmation"
-              placeholder="Confirme a nova senha"
-              required
-              type="password"
-            />
-            {errors.newPasswordConfirmation &&
-              errors.newPasswordConfirmation.map((error: string, i: number) => (
-                <div key={i}>
-                  <p className="auth-form-error">{error}</p>
-                  <br />
-                </div>
-              ))}
-          </div>
-          <Button
-            type="submit"
-            className="auth-form-submit-button"
-            disabled={isPending}
-          >
-            {isPending ? 'Atualizando...' : 'Atualizar Senha'}
-          </Button>
+    <div className="main-auth-form-wrapper">
+      <Card className="w-full max-w-[520px] md:max-w-[420px] lg:max-w-[380px] shadow-login border-0 bg-white dark:bg-card py-4">
+        <CardHeader className="text-center px-6 pt-6 pb-0">
+          <CardTitle className="text-xl font-extrabold mb-1">Atualizar senha</CardTitle>
+          <p className="text-muted-foreground text-sm">Use o código recebido para definir uma nova senha</p>
+        </CardHeader>
+        <CardContent className="px-6 pt-3 pb-4">
+          <form action={formAction} className="space-y-4">
+            <div>
+              <label htmlFor="code" className="forms-label">Código</label>
+              <Input
+                id="code"
+                name="code"
+                placeholder="Código de recuperação"
+                required
+                className="forms-input mt-1"
+              />
+              {errors.code && (
+                errors.code.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
 
-          <div className="flex justify-center items-center w-full">
-            <Link href='/auth/login' className="w-full text-center">
-              <span className="text-xs text-blue-500 hover:underline">Já atualizou a senha? Logar</span>
-            </Link>
-          </div>
-        </form>
-      </div>
+            <div>
+              <label htmlFor="email" className="forms-label">Email</label>
+              <Input
+                id="email"
+                name="email"
+                placeholder="seu@email.com"
+                required
+                type="email"
+                className="forms-input mt-1"
+              />
+              {errors.email && (
+                errors.email.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="newPassword" className="forms-label">Nova Senha</label>
+              <Input
+                id="newPassword"
+                name="newPassword"
+                placeholder="Nova senha"
+                required
+                type="password"
+                className="forms-input mt-1"
+              />
+              {errors.newPassword && (
+                errors.newPassword.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="newPasswordConfirmation" className="forms-label">Confirme a Nova Senha</label>
+              <Input
+                id="newPasswordConfirmation"
+                name="newPasswordConfirmation"
+                placeholder="Confirme a nova senha"
+                required
+                type="password"
+                className="forms-input mt-1"
+              />
+              {errors.newPasswordConfirmation && (
+                errors.newPasswordConfirmation.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
+
+            <div>
+              <Button
+                type="submit"
+                className="forms-button"
+                disabled={isPending}
+              >
+                {isPending ? 'Atualizando...' : 'Atualizar Senha'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2 items-center px-6 pb-4 pt-0">
+          <span className="text-sm text-muted-foreground">Voltar para <Link href="/auth/login" className="text-primary hover:underline font-medium">Login</Link></span>
+          <small className="text-xs text-muted-foreground mt-1">© {year} Teixeira Tratores™</small>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

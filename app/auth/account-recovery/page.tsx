@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import React, { useActionState, useState } from 'react';
 import { z } from 'zod';
 import { emailRecoverFormSchema } from '@/lib/validation';
@@ -11,6 +12,7 @@ import Link from 'next/link';
 
 const PasswordRecovery = () => {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const year = new Date().getFullYear();
 
   const handleRecovery = async (prevState: any, formData: FormData) => {
     try {
@@ -87,44 +89,51 @@ const PasswordRecovery = () => {
   });
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-slate-50'>
-      <div className='auth-form-container !p-0 h-[420px] min-h-[420px]'>
-        <form action={formAction} className="flex flex-col h-full w-full">
-          <div className="flex flex-col justify-center h-1/2 w-full items-center p-2">
-            <div className="w-full flex flex-col gap-2">
-              <label htmlFor="email" className="text-left w-full">Email</label>
+    <div className="main-auth-form-wrapper">
+      <Card className="w-full max-w-[520px] md:max-w-[420px] lg:max-w-[380px] shadow-login border-0 bg-white dark:bg-card py-4">
+        <CardHeader className="text-center px-6 pt-6 pb-0">
+          <CardTitle className="text-xl font-extrabold mb-1">Recuperar conta</CardTitle>
+          <p className="text-muted-foreground text-sm">Digite seu e-mail para solicitar recuperação</p>
+        </CardHeader>
+        <CardContent className="px-6 pt-3 pb-4">
+          <form action={formAction} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="forms-label">Email</label>
               <Input
                 id="email"
                 name="email"
-                placeholder='SeuEmail@site.com'
+                placeholder="seu@email.com"
                 required
+                className="forms-input mt-1"
+                autoComplete="email"
               />
               {errors.email && (
                 errors.email.map((error: string, i: number) => (
-                  <div key={i} className="w-full text-center">
-                    <p className="auth-form-error" key={i}>{error}</p>
-                  </div>
+                  <p className="forms-error" key={i}>{error}</p>
                 ))
               )}
             </div>
-          </div>
-          
-          <div className="flex flex-col gap-2 w-full mt-8 auth-form-bottom !p-0 !px-0 !py-0">
-            <Button
-              type='submit'
-              className='auth-form-submit-button w-full'
-              disabled={isPending}
-            >
-              {isPending ? 'Enviando...' : 'Recuperar Senha'}
-            </Button>
-            <div className="flex justify-center items-center w-full mt-10">
-              <Link href='/auth/password-update' className="w-full text-center">
-                <span className="text-xs text-blue-500 hover:underline">Já tem um código? Atualizar senha</span>
-              </Link>
+
+            <div className="flex justify-end">
+              <Link href='/auth/password-update' className="text-sm text-primary hover:underline font-medium">Já tem um código? Atualizar senha</Link>
             </div>
-          </div>
-        </form>
-      </div>
+
+            <div>
+              <Button
+                type='submit'
+                className='forms-button'
+                disabled={isPending}
+              >
+                {isPending ? 'Enviando...' : 'Recuperar Senha'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2 items-center px-6 pb-4 pt-0">
+          <span className="text-sm text-muted-foreground">Voltar para <Link href="/auth/login" className="text-primary hover:underline font-medium">Login</Link></span>
+          <small className="text-xs text-muted-foreground mt-1">© {year} Teixeira Tratores™</small>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

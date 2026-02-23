@@ -118,8 +118,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
+    /* force clean background and no gradient/stripe */
+    background-color: var(--background) !important;
+    background-image: none !important;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -145,20 +150,59 @@
   }
 
   .forms-button {
-    @apply mt-5 w-full h-10 sm:h-12 shadow-lg cursor-pointer touch-manipulation;
+    @apply mt-3 w-full h-10 rounded-md font-semibold shadow-lg hover:opacity-95 transition-opacity;
+    background-color: #0b0b0b;
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 8px 28px rgba(11,11,11,0.12);
   }
 
   .forms-label {
-    @apply text-lg sm:text-xl font-semibold;
+    @apply text-sm font-medium text-foreground;
   }
 
   .forms-input {
-    @apply w-full h-10 sm:h-12 border-2 mt-2 border-gray-300 rounded-md px-3 py-2 shadow-sm text-base;
+    @apply w-full h-9 border border-gray-200 mt-2 rounded-md px-3 py-1.5 shadow-sm text-sm bg-[color:var(--card)]/80;
+    transition: box-shadow .12s ease, transform .05s ease;
+    background-color: #eef6ff;
+    border: 1px solid rgba(16,24,40,0.06);
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+
+  .forms-input:focus {
+    @apply ring-2 ring-primary/40 border-primary;
+    outline: none;
   }
 
   .forms-error{
-    @apply capitalize text-sm text-red-600 select-none;
+    @apply capitalize text-sm text-red-600 select-none mt-1;
   }
+
+  .main-auth-form-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 12px;
+    background-image: none;
+    background: transparent;
+  }
+
+  /* Card look improvements for login */
+  [data-slot="card"] {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background-clip: padding-box;
+  }
+
+  .shadow-login {
+    box-shadow: 0 30px 50px rgba(2,6,23,0.08), 0 6px 18px rgba(2,6,23,0.06);
+  }
+
+  /* Improve the primary/foreground variable usage: keep button dark */
+  .bg-foreground { background-color: var(--foreground); }
+  .text-background { color: var(--background); }
 }
 
 /* Mobile-specific improvements */
