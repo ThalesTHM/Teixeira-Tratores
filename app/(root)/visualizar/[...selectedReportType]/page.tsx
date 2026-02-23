@@ -50,8 +50,30 @@ const SelectReportItem = ({ params }: { params: Promise<{ selectedReportType: st
             createEventSource();
           }, timeout) as unknown as number;
         } else {
-          setError('Erro ao conectar ao servidor de lista.');
-          setLoading(false);
+          // final failure: try a single HTTP fetch as a fallback (useful on platforms
+          // where long-lived SSE connections are unreliable)
+          const fallbackUrl = url.replace(/\/+$/, '');
+          try {
+            fetch(fallbackUrl, { cache: 'no-store' })
+              .then(r => r.json())
+              .then(data => {
+                if (data) {
+                  setItems(data);
+                  setError(undefined);
+                } else {
+                  setError('Erro ao conectar ao servidor de lista.');
+                }
+              })
+              .catch((fetchErr) => {
+                console.error('Fallback fetch failed:', fetchErr);
+                setError('Erro ao conectar ao servidor de lista.');
+              })
+              .finally(() => setLoading(false));
+          } catch (e) {
+            console.error('Fallback fetch exception:', e);
+            setError('Erro ao conectar ao servidor de lista.');
+            setLoading(false);
+          }
         }
       };
 
