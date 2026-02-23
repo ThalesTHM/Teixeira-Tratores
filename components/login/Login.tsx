@@ -2,6 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import Link from 'next/link';
 import React, { useActionState, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { loginFormSchema } from '@/lib/validation';
@@ -20,6 +22,8 @@ const Login = () => {
   const [hasMounted, setHasMounted] = useState(false);
 
   const router = useRouter();
+
+  const year = new Date().getFullYear();
 
   const params = useSearchParams();
   const redirected = params.get('redirected');
@@ -105,60 +109,68 @@ const Login = () => {
   });
 
   return (
-    <div className='main-auth-form-container'>
-      <div className='auth-form-container'>
-        <form action={formAction}>
-          <div>
-            <label htmlFor="email">Email</label>
-            <Input
-              id="email"
-              name="email"
-              placeholder='SeuEmail@site.com'
-              required
-            />
-            {errors.email && (
-              errors.email.map((error: string, i: number) => (
-              <>
-                <div key={i}>
-                  <p className="auth-form-error" key={i}>{error}</p> 
-                  <br/>
-                </div>
-              </>
-            )
-            ))}
-          </div>
-
-          <div className='mt-5'>
-            <label htmlFor="password">Senha</label>
-            <Input
-              id="password"
-              name="password"
-              placeholder='senha'
-              type="password"
-            />
-            {errors.password && (
-              errors.password.map((error: string, i: number) => (
-                <>
-                  <div key={i}>
-                    <p className="auth-form-error" key={i}>{error}</p> 
-                    <br/>
-                  </div>
-                </>
-            )
-            ))}
-          </div>
-
-          <Button 
-            type='submit'
-            className='auth-form-submit-button'
-            disabled={isPending}
-          >
-            {isPending ? 'Logando...' : 'Logar'}
-          </Button>
-        </form>
-      </div>
+    <div className="main-auth-form-wrapper">
+      <Card style={{ width: '100%', maxWidth: '380px', minWidth: '320px' }} className="w-full shadow-login border-0 bg-white dark:bg-card py-4">
+        <CardHeader className="text-center px-5 pt-3 pb-0">
+          <CardTitle className="text-lg font-extrabold mb-0">Bem-vindo de volta</CardTitle>
+          <p className="text-muted-foreground text-xs mt-1">Entre para acessar sua conta</p>
+        </CardHeader>
+        <CardContent className="px-6 pt-2 pb-4">
+          <form action={formAction} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="forms-label">Email</label>
+              <Input
+                id="email"
+                name="email"
+                placeholder="seu@email.com"
+                required
+                className="forms-input mt-1"
+                autoComplete="email"
+              />
+              {errors.email && (
+                errors.email.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
+            <div>
+              <label htmlFor="password" className="forms-label">Senha</label>
+              <Input
+                id="password"
+                name="password"
+                placeholder="Sua senha"
+                type="password"
+                className="forms-input mt-1"
+                autoComplete="current-password"
+              />
+              {errors.password && (
+                errors.password.map((error: string, i: number) => (
+                  <p className="forms-error" key={i}>{error}</p>
+                ))
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <div />
+              <Link href="/auth/account-recovery" className="text-sm text-primary hover:underline font-medium">Esqueceu sua senha?</Link>
+            </div>
+            <div>
+              <Button
+                type="submit"
+                className="forms-button"
+                disabled={isPending}
+              >
+                {isPending ? 'Logando...' : 'Logar'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2 items-center px-6 pb-4 pt-0">
+          <span className="text-sm text-muted-foreground">Não tem uma conta? <Link href="/auth/signup" className="text-primary hover:underline font-medium">Cadastre-se</Link></span>
+          <small className="text-xs text-muted-foreground mt-1">© {year} Teixeira Tratores™</small>
+        </CardFooter>
+      </Card>
     </div>
-  )
+  );
 }
 
 export default Login;
