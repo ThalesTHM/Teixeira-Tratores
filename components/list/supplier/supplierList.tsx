@@ -59,6 +59,7 @@ const SupplierList = () => {
         <Link
           key={supplier.id}
           href={`/visualizando/fornecedor/${supplier.slug}`}
+          prefetch={false}
           className="no-underline"
         >
           <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">

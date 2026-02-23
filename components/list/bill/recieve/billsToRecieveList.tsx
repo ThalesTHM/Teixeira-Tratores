@@ -56,7 +56,7 @@ const BillsToRecieveList: React.FC = () => {
       <h2 className="text-lg font-bold mb-4">Contas a Receber</h2>
       <div className="flex flex-col gap-4">
         {bills.map((bill) => (
-          <Link key={bill.id} href={`/visualizando/conta/conta-a-receber/${bill.slug}`} className="no-underline">
+          <Link key={bill.id} href={`/visualizando/conta/conta-a-receber/${bill.slug}`} prefetch={false} className="no-underline">
             <Card className="p-4 flex flex-row items-center gap-2 cursor-pointer hover:bg-gray-50 transition">
               <div className="flex-1">
                 <b>{bill.name}</b>
