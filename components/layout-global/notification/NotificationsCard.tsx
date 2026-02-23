@@ -12,6 +12,7 @@ const NotificationCard = ({ notification }: { notification: Notification}) => {
     (notification.slug ? (
       <Link 
         href={`/visualizando/${notification.notificationSource}/${notification.slug}`} 
+        prefetch={false}
         className={`w-full p-2 ${notification.read ? 'bg-gray-300' : 'bg-gray-100'} flex flex-row select-none relative z-10`}
         onClick={ () => marknotificaitonsAsRead(notification.id) }
       >
@@ -49,6 +50,7 @@ const NotificationCard = ({ notification }: { notification: Notification}) => {
     ) : (
       <Link 
         href={`/visualizar/${notification.notificationSource}`} 
+        prefetch={false}
         onClick={ () => marknotificaitonsAsRead(notification.id) }
         className={`w-full p-2 ${notification.read ? 'bg-gray-300' : 'bg-gray-100'} flex flex-row select-none relative z-10`}
       >

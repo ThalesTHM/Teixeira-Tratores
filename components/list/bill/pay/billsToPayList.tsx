@@ -68,6 +68,7 @@ const BillsToPayList = () => {
           <Link
             key={key}
             href={`/visualizando/conta/conta-a-pagar/${bill.slug}`}
+            prefetch={false}
             className="no-underline"
           >
             <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">

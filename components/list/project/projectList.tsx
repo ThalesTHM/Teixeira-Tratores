@@ -60,6 +60,7 @@ const ProjectList = () => {
           <Link
             key={key}
             href={`/visualizando/projeto/${project.slug}`}
+            prefetch={false}
             className="no-underline"
           >
             <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">

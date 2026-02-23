@@ -58,6 +58,7 @@ const ClientList = () => {
         <Link
           key={client.id}
           href={`/visualizando/cliente/${client.slug}`}
+          prefetch={false}
           className="no-underline"
         >
           <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">

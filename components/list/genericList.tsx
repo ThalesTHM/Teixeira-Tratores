@@ -94,7 +94,7 @@ const GenericList = ({ listTitle, items = [], loading, error }: { listTitle: str
   if (error) {
     return (
       <div className="flex justify-center items-center h-full w-full mt-10">
-        <p className="forms-error">Erro Ao Buscar Projetos</p>
+        <p className="forms-error">{error || 'Erro Ao Buscar Projetos'}</p>
       </div>
     );
   }
@@ -210,6 +210,7 @@ const GenericList = ({ listTitle, items = [], loading, error }: { listTitle: str
           <Link
             key={key}
             href={`/visualizando/${listTitle}/${item.slug}`}
+            prefetch={false}
             className="no-underline"
           >
             <Card className="p-4 flex flex-row items-center justify-between shadow-md hover:bg-gray-100 transition-colors cursor-pointer">
